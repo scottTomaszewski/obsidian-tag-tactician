@@ -1,3 +1,8 @@
+.tt-bulk-tag-modal {
+    width: 80vw;
+    max-width: 1200px;
+}
+
 /* Container that holds the file rows (including the header row) */
 .bulk-tag-table-container {
     margin-top: 1rem;

@@ -55,6 +55,7 @@ export class EditTagsModal extends Modal {
 
     async onOpen() {
         const { contentEl } = this;
+        this.modalEl.addClass("tt-bulk-tag-modal");
         contentEl.empty();
         contentEl.createEl("h2", { text: "Bulk Edit Frontmatter Tags" });
 
