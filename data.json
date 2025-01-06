@@ -1,17 +1,4 @@
 {
   "showNonMarkdownWarning": true,
-  "tagListStyle": "brackets",
-  "version": 2,
-  "inlineAdmonitions": {
-    "291df887-ad1b-4fec-88ef-1f9c52bafef5": {
-      "backgroundColor": "#f1f1f1",
-      "bgColorOpacityPercent": 100,
-      "color": "#000000",
-      "colorOpacityPercent": 100,
-      "slug": "291df887-ad1b-4fec-88ef-1f9c52bafef5",
-      "type": "prefix",
-      "prefix": "a",
-      "hideTriggerString": false
-    }
-  }
+  "tagListStyle": "brackets"
 }

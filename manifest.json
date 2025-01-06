@@ -1,9 +1,9 @@
 {
-	"id": "bulk-tag",
-	"name": "Bulk Tag",
+	"id": "tag-tactician",
+	"name": "Tag Tactician",
 	"version": "0.0.1",
 	"minAppVersion": "0.15.0",
-	"description": "Bulk tag operations",
+	"description": "Better tag management: Bulk actions",
 	"author": "Scott Tomaszewski (Xentis)",
 	"authorUrl": "https://github.com/scottTomaszewski",
 	"isDesktopOnly": true
