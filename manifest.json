@@ -1,0 +1,10 @@
+{
+	"id": "bulk-tag",
+	"name": "Bulk Tag",
+	"version": "0.0.1",
+	"minAppVersion": "0.15.0",
+	"description": "Bulk tag operations",
+	"author": "Scott Tomaszewski (Xentis)",
+	"authorUrl": "https://github.com/scottTomaszewski",
+	"isDesktopOnly": true
+}

@@ -1,0 +1,76 @@
+/* Container that holds the file rows (including the header row) */
+.bulk-tag-table-container {
+    margin-top: 1rem;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+    padding: 0;
+}
+
+/* Each row within the container */
+.bulk-tag-table-row {
+    display: flex;
+    align-items: center;
+    padding: 0.3rem 0.5rem;
+}
+
+/* The header row can have a distinct background or bold font */
+.table-header-row {
+    background-color: var(--background-secondary-alt);
+    font-weight: 600;
+}
+
+.warning {
+	color: red;
+}
+
+/* Create columns:
+   1) Checkbox column
+   2) File name
+   3) Current tags
+   4) Proposed tags
+*/
+.cb-col {
+    width: 24px; /* enough space for a checkbox */
+    margin-right: 0.5rem;
+}
+.file-name-col {
+    min-width: 120px;
+    margin-right: 1rem;
+    /* Make text wrap if too long: */
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+.current-tags-col {
+    flex: 1;
+    margin-right: 1rem;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+.proposed-tags-col {
+    flex: 1;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+/*
+   Use a border between row items if you like:
+   .bulk-tag-table-row + .bulk-tag-table-row {
+     border-top: 1px solid var(--background-modifier-border);
+   }
+*/
+
+/* The .header-col class can help style the text in the column headers */
+.header-col {
+    font-weight: 600;
+    margin-right: 1rem;
+}
+
+/* The "File Selection" setting group */
+.setting-item[data-setting="File Selection"] {
+    margin-top: 1rem;
+}
+
+/* Style the "Select All" / "Deselect All" buttons within that setting. */
+.setting-item[data-setting="File Selection"] .setting-item-control button {
+    margin-right: 0.5rem;
+}
