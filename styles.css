@@ -82,6 +82,11 @@
         overflow-wrap: anywhere;
     }
 
+    .current-tags-col a[disabled],
+    .proposed-tags-col a[disabled] {
+        pointer-events: none;
+    }
+
     /* Header row styling */
 
     .table-header-row {

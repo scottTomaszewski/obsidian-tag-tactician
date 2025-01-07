@@ -277,18 +277,15 @@ export class EditTagsModal extends Modal {
         });
 
         // Current tags
-        rowEl.createEl("span", {
-            text: tagData.currentTags.join(", "),
-            cls: "current-tags-col",
-        });
+        const currTags = rowEl.createEl("span", {cls: "current-tags-col"});
+        tagData.currentTags.forEach(t => currTags.createEl("a", {cls: "tag", text: t, attr: {disabled: true}}));
 
         // Proposed tags
-        const proposedEl = rowEl.createEl("span", {
-            text: tagData.proposedTags.join(", "),
-            cls: "proposed-tags-col",
-        }) as HTMLSpanElement;
+        const propTags = rowEl.createEl("span", {cls: "proposed-tags-col"});
+        tagData.proposedTags.forEach(t => propTags.createEl("a", {cls: "tag", text: t, attr: {disabled: true}}));
+
         // Store a reference to update text later
-        tagData.proposedEl = proposedEl;
+        tagData.proposedEl = propTags;
     }
 
     /**
@@ -316,7 +313,8 @@ export class EditTagsModal extends Modal {
 
             // Update the UI if we have a reference
             if (tagData.proposedEl) {
-                tagData.proposedEl.textContent = newTagSet.join(", ");
+                tagData.proposedEl.empty();
+                newTagSet.forEach(t => tagData.proposedEl.createEl("a", {cls: "tag", text: t, attr: {disabled: true}}));
             }
         }
     }
