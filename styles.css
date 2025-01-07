@@ -1,82 +1,96 @@
 .tt-bulk-tag-modal {
+    /* Keep a wider modal overall, if desired */
     width: 80vw;
-    max-width: 1200px;
+
+
+    .warning {
+        color: red;
+    }
+
+    /* Container: treat as a table with auto layout */
+
+    .bulk-tag-table-container {
+        display: table;
+        /* Let the table expand based on content;
+           if you still want it to fill the modal width, keep width: 100%. */
+        width: 100%;
+
+        /* Key change: remove table-layout: fixed;
+           so columns can auto-size to content. */
+        table-layout: auto;
+
+        border: 1px solid var(--background-modifier-border);
+        border-radius: 4px;
+        margin-top: 1rem;
+    }
+
+    /* Each row is a table-row */
+
+    .bulk-tag-table-row {
+        display: table-row;
+        /* Remove flex properties so it truly behaves like a table. */
+        /* border-bottom is optional for row separators */
+        border-bottom: 1px solid var(--background-modifier-border);
+    }
+
+    /* Each cell is display: table-cell */
+
+    .bulk-tag-table-row > span {
+        display: table-cell;
+        padding: 0.5rem;
+        vertical-align: middle;
+        /* Optionally, give a right border to each cell:
+           border-right: 1px solid var(--background-modifier-border);
+         */
+        /* If you want to allow wide content to remain on one line: */
+        white-space: nowrap;
+        /* or, if you'd rather allow multi-line: white-space: normal; */
+    }
+
+    /* Checkbox column: let it size just enough for the checkbox */
+
+    .cb-col {
+        display: table-cell;
+        vertical-align: middle;
+        text-align: center;
+
+    }
+
+    /* Example of removing or reducing strict widths on these columns: */
+
+    .file-name-col {
+        /* Remove fixed widths if you want truly auto widths.
+           e.g., min-width: 8rem; (just to keep it from collapsing too small) */
+        /* Or let the table auto-allocate. */
+        font-weight: 500;
+        color: var(--text-accent);
+        overflow-wrap: anywhere;
+    }
+
+    /* Let these auto-size as well */
+
+    .current-tags-col {
+        overflow-wrap: anywhere;
+    }
+
+    .proposed-tags-col {
+        overflow-wrap: anywhere;
+    }
+
+    /* Header row styling */
+
+    .table-header-row {
+        background-color: var(--background-secondary-alt);
+        font-weight: 600;
+    }
 }
 
-.warning {
-    color: red;
-}
 
-/* Make the overall container a “table” so columns stay consistent */
-.bulk-tag-table-container {
-    display: table;
-    width: 100%;
-    table-layout: fixed; /* so columns don't auto-resize */
-    border: 1px solid var(--background-modifier-border);
-    border-radius: 4px;
-    margin-top: 1rem;
-}
-
-/* Each row is now a “table-row” */
-.bulk-tag-table-row {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-direction: row;
-    border-bottom: 1px solid var(--background-modifier-border);
-}
-
-/* Each column is a “table-cell”.
-   For the header row, we typically style differently (e.g. .header-col).
-*/
-.bulk-tag-table-row > span {
-    display: table-cell;
-    padding: 0.5rem;
-    vertical-align: middle; /* center the text vertically */
-    /* if you want each column to show dividing lines:
-       border-right: 1px solid var(--background-modifier-border);
-    */
-}
-
-/* Optionally set specific column widths or relative sizes */
-.bulk-tag-table-row .cb-col {
-    margin-left: .5em;
-}
-
-.file-name-col {
-    width: 25%;  /* pick a percentage or fixed px */
-    font-weight: 500;
-    color: var(--text-accent);
-    overflow-wrap: anywhere;
-    white-space: pre-wrap;
-}
-
-.current-tags-col {
-    width: 35%;
-    overflow-wrap: anywhere;
-    white-space: pre-wrap;
-}
-
-.proposed-tags-col {
-    width: 40%;
-    overflow-wrap: anywhere;
-    white-space: pre-wrap;
-}
-
-/* The header row can get a different background or font weight */
-.table-header-row {
-    background-color: var(--background-secondary-alt);
-    font-weight: 600;
-}
-
-/* Make the “File Selection” row (the one with Select All buttons) look good */
+/* The "File Selection" setting row (for Select All buttons) */
 .setting-item[data-setting="File Selection"] {
     margin-top: 1rem;
 }
 
-/* Optional styling for the "Select All" / "Deselect All" buttons */
 .setting-item[data-setting="File Selection"] .setting-item-control button {
     margin-right: 0.5rem;
 }
-
-

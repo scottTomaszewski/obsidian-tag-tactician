@@ -70,10 +70,10 @@ export class EditTagsModal extends Modal {
     }
 
     async onOpen() {
-        const { contentEl } = this;
+        const {contentEl} = this;
         this.modalEl.addClass("tt-bulk-tag-modal");
         contentEl.empty();
-        contentEl.createEl("h2", { text: "Bulk Edit Frontmatter Tags" });
+        contentEl.createEl("h2", {text: "Bulk Edit Frontmatter Tags"});
 
         // 1) Warn user about non-markdown files
         if (this.nonMarkdownFiles.length > 0) {
@@ -84,7 +84,7 @@ export class EditTagsModal extends Modal {
             });
             const ul = contentEl.createEl("ul");
             this.nonMarkdownFiles.forEach((f) => {
-                ul.createEl("li", { text: f.name });
+                ul.createEl("li", {text: f.name});
             });
         }
 
@@ -99,7 +99,7 @@ export class EditTagsModal extends Modal {
             });
             const ul = contentEl.createEl("ul");
             this.invalidYamlFiles.forEach((f) => {
-                ul.createEl("li", { text: f.name });
+                ul.createEl("li", {text: f.name});
             });
         }
 
@@ -162,7 +162,7 @@ export class EditTagsModal extends Modal {
         const headerRow = tableContainer.createEl("div", {
             cls: "bulk-tag-table-row table-header-row",
         });
-        headerRow.createEl("span", { cls: "cb-col" });
+        headerRow.createEl("span", {cls: "cb-col"});
         headerRow.createEl("span", {
             text: "File Name",
             cls: "file-name-col header-col",
@@ -258,13 +258,11 @@ export class EditTagsModal extends Modal {
      * checkbox and proposed tags elements directly in the tagData object.
      */
     private renderFileRow(containerEl: HTMLElement, tagData: RenderableFileTagData) {
-        const rowEl = containerEl.createEl("div", { cls: "bulk-tag-table-row" });
+        const rowEl = containerEl.createEl("div", {cls: "bulk-tag-table-row"});
 
         // Checkbox
-        const checkbox = rowEl.createEl("input", {
-            type: "checkbox",
-            cls: "cb-col",
-        }) as HTMLInputElement;
+        const cbContainer = rowEl.createEl("div", {cls: "cb-col"});
+        const checkbox = cbContainer.createEl("input", {type: "checkbox"}) as HTMLInputElement;
         checkbox.checked = tagData.accepted;
         checkbox.onchange = () => {
             tagData.accepted = checkbox.checked;
