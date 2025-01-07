@@ -24,6 +24,11 @@
         margin-top: 1rem;
     }
 
+    /* Zebra striping for every even row, but skip the header row */
+    .bulk-tag-table-container .bulk-tag-table-row:nth-child(even):not(.table-header-row) {
+        background-color: var(--background-primary-alt);
+    }
+
     /* Each row is a table-row */
 
     .bulk-tag-table-row {
