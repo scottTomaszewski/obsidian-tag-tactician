@@ -23,17 +23,16 @@
     align-items: center;
     justify-content: center;
     flex-direction: row;
+    border-bottom: 1px solid var(--background-modifier-border);
 }
 
 /* Each column is a “table-cell”.
    For the header row, we typically style differently (e.g. .header-col).
 */
 .bulk-tag-table-row > span {
-    height: 2.5em;
     display: table-cell;
     padding: 0.5rem;
     vertical-align: middle; /* center the text vertically */
-    border-bottom: 1px solid var(--background-modifier-border);
     /* if you want each column to show dividing lines:
        border-right: 1px solid var(--background-modifier-border);
     */
