@@ -10,6 +10,9 @@ import * as yaml from "js-yaml";
 
 const FRONTMATTER_REGEX = /^(?:\uFEFF)?---\r?\n([\s\S]*?)\r?\n---/;
 
+/**
+ * Basic data about a file’s tags (current & proposed).
+ */
 interface FileTagData {
     file: TFile;
     currentTags: string[];
@@ -17,35 +20,48 @@ interface FileTagData {
     accepted: boolean; // whether this file is selected to receive changes
 }
 
-export class EditTagsModal extends Modal {
-    mdFiles: TFile[];
-    nonMarkdownFiles: TAbstractFile[] = [];
-    invalidYamlFiles: TAbstractFile[] = [];
+/**
+ * Extended data that also includes references to DOM elements in the modal,
+ * so we can update checkboxes and proposed-tag spans without casting.
+ */
+interface RenderableFileTagData extends FileTagData {
+    checkboxEl?: HTMLInputElement;  // the file’s “Accept/Reject” checkbox
+    proposedEl?: HTMLSpanElement;   // the span showing the file’s updated tags
+}
 
-    // Instead of onSubmit(toAdd, toRemove), we now do a more advanced pattern:
+/**
+ * The modal that bulk-edits frontmatter tags across multiple files.
+ */
+export class EditTagsModal extends Modal {
+    // Separate arrays for different categories of files:
+    private mdFiles: TFile[];                // valid markdown files
+    private nonMarkdownFiles: TAbstractFile[] = [];
+    private invalidYamlFiles: TAbstractFile[] = [];
+
+    /**
+     * The user’s callback, receiving an array of { file, finalTags } after the user applies changes.
+     */
     onSubmit: (filesToUpdate: { file: TFile; finalTags: string[] }[]) => void;
 
     // The user’s add/remove arrays, extracted from text inputs
     private tagsToAdd: string[] = [];
     private tagsToRemove: string[] = [];
 
-    // Holds each file’s current + proposed tags, plus a checkbox state
-    private fileTagData: FileTagData[] = [];
+    // Holds each file’s current + proposed tags, along with references to UI elements
+    private fileTagData: RenderableFileTagData[] = [];
 
     constructor(
         app: App,
         files: TAbstractFile[],
-        // We'll pass the final set of updates (per file) to onSubmit
         onSubmit: (filesToUpdate: { file: TFile; finalTags: string[] }[]) => void
     ) {
         super(app);
 
-        // Filter to .md files only
+        // Filter out valid .md files
         this.mdFiles = files.filter(
-            (f) => f instanceof TFile && f.extension === "md"
-        ) as TFile[];
-
-        // Keep everything else as "non-markdown" so we can warn about them
+            (f): f is TFile => f instanceof TFile && f.extension === "md"
+        );
+        // The rest are “non-markdown” (folders or other extensions)
         this.nonMarkdownFiles = files.filter(
             (f) => !(f instanceof TFile && f.extension === "md")
         );
@@ -72,10 +88,10 @@ export class EditTagsModal extends Modal {
             });
         }
 
-        // 2) Read frontmatter from each valid MD file to gather current tags (may also skip invalid YAML)
+        // 2) Read frontmatter from each valid MD file (may also skip invalid YAML)
         await this.loadFileTagData();
 
-        // 2a) If we found invalid YAML files, show a warning about them, too
+        // 2a) If we found invalid YAML files, show a warning
         if (this.invalidYamlFiles.length > 0) {
             contentEl.createEl("p", {
                 cls: "warning",
@@ -88,17 +104,17 @@ export class EditTagsModal extends Modal {
         }
 
         // 3) Render the top input fields for "tags to add" / "tags to remove"
-        const addSetting = new Setting(contentEl)
+        new Setting(contentEl)
             .setName("Tags to Add (comma or space separated)")
             .addText((text) => {
                 text.setPlaceholder("foo, bar/1");
                 text.onChange((val) => {
                     this.tagsToAdd = parseTagInput(val);
-                    this.updateProposedTags(); // update the table rows in real time
+                    this.updateProposedTags();
                 });
             });
 
-        const removeSetting = new Setting(contentEl)
+        new Setting(contentEl)
             .setName("Tags to Remove (comma or space separated)")
             .addText((text) => {
                 text.setPlaceholder("bar/2, oldTag");
@@ -116,26 +132,24 @@ export class EditTagsModal extends Modal {
                 btn
                     .setButtonText("Select All")
                     .onClick(() => {
-                        this.fileTagData.forEach((tagData) => {
+                        for (const tagData of this.fileTagData) {
                             tagData.accepted = true;
-                            const checkbox = (tagData as any)._checkboxEl as HTMLInputElement;
-                            if (checkbox) {
-                                checkbox.checked = true;
+                            if (tagData.checkboxEl) {
+                                tagData.checkboxEl.checked = true;
                             }
-                        });
+                        }
                     })
             )
             .addButton((btn) =>
                 btn
                     .setButtonText("Deselect All")
                     .onClick(() => {
-                        this.fileTagData.forEach((tagData) => {
+                        for (const tagData of this.fileTagData) {
                             tagData.accepted = false;
-                            const checkbox = (tagData as any)._checkboxEl as HTMLInputElement;
-                            if (checkbox) {
-                                checkbox.checked = false;
+                            if (tagData.checkboxEl) {
+                                tagData.checkboxEl.checked = false;
                             }
-                        });
+                        }
                     })
             );
 
@@ -149,18 +163,26 @@ export class EditTagsModal extends Modal {
             cls: "bulk-tag-table-row table-header-row",
         });
         headerRow.createEl("span", { cls: "cb-col" });
-        headerRow.createEl("span", { text: "File Name", cls: "file-name-col header-col" });
-        headerRow.createEl("span", { text: "Current Tags", cls: "current-tags-col header-col" });
-        headerRow.createEl("span", { text: "Proposed Tags", cls: "proposed-tags-col header-col" });
+        headerRow.createEl("span", {
+            text: "File Name",
+            cls: "file-name-col header-col",
+        });
+        headerRow.createEl("span", {
+            text: "Current Tags",
+            cls: "current-tags-col header-col",
+        });
+        headerRow.createEl("span", {
+            text: "Proposed Tags",
+            cls: "proposed-tags-col header-col",
+        });
 
         // 6) Render each file row
-        this.fileTagData.forEach((tagData) => {
+        for (const tagData of this.fileTagData) {
             this.renderFileRow(tableContainer, tagData);
-        });
+        }
 
         // 7) Confirm button at the bottom
         new Setting(contentEl)
-            .setName("")
             .addButton((btn) =>
                 btn
                     .setButtonText("Apply Changes")
@@ -168,7 +190,7 @@ export class EditTagsModal extends Modal {
                     .onClick(() => {
                         // Gather the final set of files that are accepted
                         const updates = this.fileTagData
-                            .filter((td) => td.accepted) // only those checked
+                            .filter((td) => td.accepted)
                             .map((td) => ({
                                 file: td.file,
                                 finalTags: td.proposedTags,
@@ -187,23 +209,20 @@ export class EditTagsModal extends Modal {
     }
 
     onClose() {
-        const { contentEl } = this;
-        contentEl.empty();
+        this.contentEl.empty();
     }
 
-    // ----------------------------------------------------------------
-    // Loads frontmatter for each file to get `currentTags`.
-    // If the YAML is invalid or has duplicates keys, we skip it
-    // and add that file to this.invalidYamlFiles.
-    // ----------------------------------------------------------------
+    /**
+     * Loads frontmatter from each MD file. If YAML is invalid, we skip that file.
+     */
     private async loadFileTagData() {
         this.fileTagData = [];
         this.invalidYamlFiles = [];
 
         for (const file of this.mdFiles) {
-            let fileContent = await this.app.vault.read(file);
+            const content = await this.app.vault.read(file);
 
-            const fmMatch = fileContent.match(FRONTMATTER_REGEX);
+            const fmMatch = content.match(FRONTMATTER_REGEX);
             let currentTags: string[] = [];
             let skipFile = false;
 
@@ -214,20 +233,15 @@ export class EditTagsModal extends Modal {
                     currentTags = normalizeTags(fmData.tags);
                 } catch (err) {
                     console.error(`Failed to parse YAML in ${file.path}`, err);
-                    // Skip this file, add to invalidYamlFiles
                     this.invalidYamlFiles.push(file);
                     skipFile = true;
                 }
             }
 
-            // If there's no frontmatter at all (fmMatch = null),
-            // that's typically fine, we'll just treat it as no tags
-            // and create frontmatter if the user adds new ones.
-            // No reason to skip it unless you want to.
-            // But if skipFile is true, we continue.
             if (skipFile) continue;
 
-            // Proposed tags starts out the same as current
+            // If there's no frontmatter, treat it as having no tags,
+            // but we won't skip it so the user can add tags from scratch.
             const proposedTags = [...currentTags];
 
             this.fileTagData.push({
@@ -239,27 +253,24 @@ export class EditTagsModal extends Modal {
         }
     }
 
-    // ----------------------------------------------------------------
-    // Renders a single "row" for the given file's data
-    // ----------------------------------------------------------------
-    private renderFileRow(
-        containerEl: HTMLElement,
-        tagData: FileTagData
-    ) {
-        // You can style this row with CSS to look like a table
+    /**
+     * Renders a single "row" for the given file's data, storing references to the
+     * checkbox and proposed tags elements directly in the tagData object.
+     */
+    private renderFileRow(containerEl: HTMLElement, tagData: RenderableFileTagData) {
         const rowEl = containerEl.createEl("div", { cls: "bulk-tag-table-row" });
 
-        // A checkbox for accept/reject
+        // Checkbox
         const checkbox = rowEl.createEl("input", {
             type: "checkbox",
             cls: "cb-col",
-        });
+        }) as HTMLInputElement;
         checkbox.checked = tagData.accepted;
         checkbox.onchange = () => {
             tagData.accepted = checkbox.checked;
         };
-
-        (tagData as any)._checkboxEl = checkbox;
+        // Store a reference for later (no casting needed).
+        tagData.checkboxEl = checkbox;
 
         // File name
         rowEl.createEl("span", {
@@ -277,35 +288,37 @@ export class EditTagsModal extends Modal {
         const proposedEl = rowEl.createEl("span", {
             text: tagData.proposedTags.join(", "),
             cls: "proposed-tags-col",
-        });
-        (tagData as any)._proposedSpanEl = proposedEl;
+        }) as HTMLSpanElement;
+        // Store a reference to update text later
+        tagData.proposedEl = proposedEl;
     }
 
-    // ----------------------------------------------------------------
-    // Recalculate the proposedTags for each file after user input
-    // ----------------------------------------------------------------
+    /**
+     * Recalculates the proposedTags for each file after user modifies
+     * “tags to add” or “tags to remove.” Also updates the UI text.
+     */
     private updateProposedTags() {
         for (const tagData of this.fileTagData) {
             // Start from the file’s current tags
             let newTagSet = [...tagData.currentTags];
 
-            // 1) Add new tags if missing
+            // Add any missing new tags
             for (const tag of this.tagsToAdd) {
                 if (!newTagSet.includes(tag)) {
                     newTagSet.push(tag);
                 }
             }
 
-            // 2) Remove tags that appear in tagsToRemove
-            newTagSet = newTagSet.filter((t) => !this.tagsToRemove.includes(t));
+            // Remove tags that appear in tagsToRemove
+            newTagSet = newTagSet.filter(
+                (t) => !this.tagsToRemove.includes(t)
+            );
 
-            // Update the row data
             tagData.proposedTags = newTagSet;
 
-            // Also update the UI text
-            const proposedEl = (tagData as any)._proposedSpanEl as HTMLElement;
-            if (proposedEl) {
-                proposedEl.textContent = newTagSet.join(", ");
+            // Update the UI if we have a reference
+            if (tagData.proposedEl) {
+                tagData.proposedEl.textContent = newTagSet.join(", ");
             }
         }
     }
@@ -317,7 +330,7 @@ export class EditTagsModal extends Modal {
 
 function parseTagInput(input: string): string[] {
     if (!input || !input.trim()) {
-        return []; // return an empty array if there's no actual input
+        return [];
     }
     // Split by commas or spaces, remove duplicates
     return Array.from(
