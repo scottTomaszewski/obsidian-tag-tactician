@@ -242,7 +242,7 @@ export class EditTagsModal extends Modal {
 
             // If there's no frontmatter, treat it as having no tags,
             // but we won't skip it so the user can add tags from scratch.
-            const proposedTags = [...currentTags];
+            const proposedTags = [...currentTags].sort();
 
             this.fileTagData.push({
                 file,
@@ -294,7 +294,6 @@ export class EditTagsModal extends Modal {
      */
     private updateProposedTags() {
         for (const tagData of this.fileTagData) {
-            // Start from the file’s current tags
             let newTagSet = [...tagData.currentTags];
 
             // Add any missing new tags
@@ -305,16 +304,27 @@ export class EditTagsModal extends Modal {
             }
 
             // Remove tags that appear in tagsToRemove
-            newTagSet = newTagSet.filter(
-                (t) => !this.tagsToRemove.includes(t)
-            );
+            newTagSet = newTagSet.filter((t) => !this.tagsToRemove.includes(t));
 
+            // Sort the resulting tags.
+            newTagSet.sort();
+
+            // Update proposedTags
             tagData.proposedTags = newTagSet;
 
             // Update the UI if we have a reference
             if (tagData.proposedEl) {
+                // Clear old tags
                 tagData.proposedEl.empty();
-                newTagSet.forEach(t => tagData.proposedEl.createEl("a", {cls: "tag", text: t, attr: {disabled: true}}));
+
+                // Rebuild each tag as a disabled <a> element
+                newTagSet.forEach((t) => {
+                    tagData.proposedEl.createEl("a", {
+                        cls: "tag",
+                        text: t,
+                        attr: { disabled: true },
+                    });
+                });
             }
         }
     }
