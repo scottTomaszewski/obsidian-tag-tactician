@@ -95,6 +95,34 @@
     }
 }
 
+.related-notes-container {
+    padding: 0.5rem;
+
+    .related-notes-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .filter-input {
+        width: 100%;
+    }
+
+    .related-note-first-row {
+        display: flex;
+        align-items: center;
+        padding: 0.25rem 0;
+    }
+
+    .related-note-link {
+        display: inline-block;
+        width: calc(90%);
+        text-overflow: ellipsis;
+        overflow: hidden;
+        white-space: nowrap;
+        padding-left: 0.5rem;
+    }
+}
 
 /* The "File Selection" setting row (for Select All buttons) */
 .setting-item[data-setting="File Selection"] {
