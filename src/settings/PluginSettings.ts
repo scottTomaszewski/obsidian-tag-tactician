@@ -1,5 +1,3 @@
-// src/settings/PluginSettings.ts
-
 export type TagListStyle = "hyphens" | "brackets";
 
 export interface TagTacticianSettings {

@@ -1,5 +1,3 @@
-// src/tagIndex/TagIndexer.ts
-
 import { App, TFile } from "obsidian";
 
 /**

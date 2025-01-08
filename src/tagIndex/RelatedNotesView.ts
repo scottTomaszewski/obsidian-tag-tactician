@@ -1,5 +1,3 @@
-// src/tagIndex/RelatedNotesView.ts
-
 import {ItemView, WorkspaceLeaf, TFile, Menu, setIcon} from "obsidian";
 import TagTacticianPlugin, {TAG_TACTICIAN_ID} from "../../main";
 
