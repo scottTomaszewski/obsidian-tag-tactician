@@ -2,12 +2,12 @@
 
 export type TagListStyle = "hyphens" | "brackets";
 
-export interface BulkFrontmatterTagSettings {
+export interface TagTacticianSettings {
     showNonMarkdownWarning: boolean;
     tagListStyle: TagListStyle;
 }
 
-export const DEFAULT_SETTINGS: BulkFrontmatterTagSettings = {
+export const DEFAULT_SETTINGS: TagTacticianSettings = {
     showNonMarkdownWarning: true,
     tagListStyle: "hyphens",
 };

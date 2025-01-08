@@ -1,10 +1,10 @@
 import { App, PluginSettingTab, Setting } from "obsidian";
-import BulkFrontmatterTagManager from "../../main";
+import TagTacticianPlugin from "../../main";
 
-export class BulkFrontmatterTagSettingsTab extends PluginSettingTab {
-    plugin: BulkFrontmatterTagManager;
+export class TagTacticianSettingTab extends PluginSettingTab {
+    plugin: TagTacticianPlugin;
 
-    constructor(app: App, plugin: BulkFrontmatterTagManager) {
+    constructor(app: App, plugin: TagTacticianPlugin) {
         super(app, plugin);
         this.plugin = plugin;
     }
@@ -12,7 +12,7 @@ export class BulkFrontmatterTagSettingsTab extends PluginSettingTab {
     display(): void {
         const { containerEl } = this;
         containerEl.empty();
-        containerEl.createEl("h2", { text: "Bulk Frontmatter Tag Manager Settings" });
+        containerEl.createEl("h2", { text: "Tag Tactician Settings" });
 
         new Setting(containerEl)
             .setName("Show Warning for Non-Markdown Files")

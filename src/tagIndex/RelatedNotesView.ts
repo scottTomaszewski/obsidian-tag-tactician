@@ -1,7 +1,7 @@
 // src/tagIndex/RelatedNotesView.ts
 
 import {ItemView, WorkspaceLeaf, TFile, Menu, setIcon} from "obsidian";
-import BulkFrontmatterTagManager, {TAG_TACTICIAN_ID} from "../../main";
+import TagTacticianPlugin, {TAG_TACTICIAN_ID} from "../../main";
 
 /**
  * Unique ID for the related notes view (shared with main.ts).
@@ -12,7 +12,7 @@ export const RELATED_NOTES_VIEW_TYPE = "related-notes-view";
  * A custom view that displays "Related Notes" in the sidebar.
  */
 export class RelatedNotesView extends ItemView {
-    plugin: BulkFrontmatterTagManager;
+    plugin: TagTacticianPlugin;
 
     /** User-entered filter text for live filtering notes. */
     private filterQuery: string = "";
@@ -23,7 +23,7 @@ export class RelatedNotesView extends ItemView {
     /** Whether to show each note’s score next to it. */
     private showScore: boolean = true;
 
-    constructor(leaf: WorkspaceLeaf, plugin: BulkFrontmatterTagManager) {
+    constructor(leaf: WorkspaceLeaf, plugin: TagTacticianPlugin) {
         super(leaf);
         this.plugin = plugin;
     }
@@ -103,9 +103,7 @@ export class RelatedNotesView extends ItemView {
         };
 
         // Container for the note list
-        const listContainer = container.createEl("div", {
-            cls: "related-notes-list-container",
-        });
+        const listContainer = container.createEl("div", {cls: "related-notes-list-container"});
         this.renderNoteList(listContainer);
     }
 
@@ -163,7 +161,7 @@ export class RelatedNotesView extends ItemView {
             });
 
             // tooltip
-            link.title = notePath; // simple tooltip
+            link.title = notePath;
 
             link.addEventListener("mouseover", (event) => {
                 this.app.workspace.trigger("hover-link", {
