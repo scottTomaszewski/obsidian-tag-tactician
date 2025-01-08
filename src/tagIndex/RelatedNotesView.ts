@@ -16,14 +16,16 @@ export class RelatedNotesView extends ItemView {
     private filterQuery: string = "";
 
     /** Whether to show each note’s tags under its title. */
-    private showTags: boolean = false;
+    private showTags: boolean;
 
     /** Whether to show each note’s score next to it. */
-    private showScore: boolean = true;
+    private showScore: boolean;
 
     constructor(leaf: WorkspaceLeaf, plugin: TagTacticianPlugin) {
         super(leaf);
         this.plugin = plugin;
+        this.showTags = this.plugin.settings.defaultShowTags;
+        this.showScore = this.plugin.settings.defaultShowScore;
     }
 
     getViewType(): string {
@@ -39,13 +41,16 @@ export class RelatedNotesView extends ItemView {
     }
 
     async onClose() {
-        // Cleanup if needed
     }
 
     /**
      * Rebuilds the entire sidebar content, including controls and the note list.
      */
     public refresh() {
+        // Refresh the settings in case the defaults changed
+        this.showTags = this.plugin.settings.defaultShowTags;
+        this.showScore = this.plugin.settings.defaultShowScore;
+
         const container = this.containerEl;
         container.addClass("related-notes-container");
         container.empty();

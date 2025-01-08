@@ -1,4 +1,6 @@
 {
   "showNonMarkdownWarning": true,
-  "tagListStyle": "brackets"
+  "tagListStyle": "brackets",
+  "defaultShowTags": true,
+  "defaultShowScore": true
 }
