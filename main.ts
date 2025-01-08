@@ -9,6 +9,7 @@ import {
     ItemView,
     WorkspaceLeaf,
     MarkdownView,
+    HoverLinkSource, HoverLinkSource,
 } from "obsidian";
 
 import { EditTagsModal } from "./src/io/EditTagsModal";
@@ -18,6 +19,8 @@ import { BulkFrontmatterTagSettingsTab } from "./src/settings/BulkFrontmatterTag
 import { TagListStyle, BulkFrontmatterTagSettings, DEFAULT_SETTINGS } from "./src/settings/PluginSettings";
 import { TagIndexer } from "./src/tagIndex/TagIndexer";
 import { RelatedNotesView, RELATED_NOTES_VIEW_TYPE } from "./src/tagIndex/RelatedNotesView";
+
+export const TAG_TACTICIAN_ID = "tag-tactician"
 
 export default class BulkFrontmatterTagManager extends Plugin {
     settings: BulkFrontmatterTagSettings;
@@ -71,6 +74,15 @@ export default class BulkFrontmatterTagManager extends Plugin {
                     this.updateRelatedNotesView();
                 }, 150);
             })
+        );
+
+        // Handle note previews in the "related notes" view
+        this.registerHoverLinkSource(
+            TAG_TACTICIAN_ID,
+            {
+                display: 'Related Notes',
+                defaultMod: true,
+            },
         );
 
         // 6) Build the tag index after layout is ready (so getMarkdownFiles() won't be empty)

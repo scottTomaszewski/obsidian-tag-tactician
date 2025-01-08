@@ -1,7 +1,7 @@
 // src/tagIndex/RelatedNotesView.ts
 
 import {ItemView, WorkspaceLeaf, TFile, Menu, setIcon} from "obsidian";
-import BulkFrontmatterTagManager from "../../main";
+import BulkFrontmatterTagManager, {TAG_TACTICIAN_ID} from "../../main";
 
 /**
  * Unique ID for the related notes view (shared with main.ts).
@@ -49,10 +49,10 @@ export class RelatedNotesView extends ItemView {
      */
     public refresh() {
         const container = this.containerEl;
-        container.addClass("related-notes-container")
+        container.addClass("related-notes-container");
         container.empty();
 
-        // Title
+        // Title row (with "Options" gear icon)
         const headerRow = container.createEl("div", {cls: "related-notes-header"});
         headerRow.createEl("h2", {text: "Related Notes"});
 
@@ -85,18 +85,15 @@ export class RelatedNotesView extends ItemView {
                     });
             });
 
-            // Show the menu at the mouse event location
             menu.showAtMouseEvent(evt);
         };
 
-        // -- 1) Controls/Filters UI --
+        // Filter input
         const controls = container.createEl("div", {cls: "related-notes-controls"});
-
-        // Text box for live filtering
         const filterInput = controls.createEl("input", {
             type: "search",
             placeholder: "Filter related notes...",
-            cls: "filter-input"
+            cls: "filter-input",
         });
         filterInput.value = this.filterQuery;
         filterInput.style.minWidth = "120px";
@@ -105,7 +102,7 @@ export class RelatedNotesView extends ItemView {
             this.refreshList(); // re-render note list only
         };
 
-        // -- 2) Container for the note list --
+        // Container for the note list
         const listContainer = container.createEl("div", {
             cls: "related-notes-list-container",
         });
@@ -116,9 +113,7 @@ export class RelatedNotesView extends ItemView {
      * Rerender just the note list portion, preserving the top controls.
      */
     private refreshList() {
-        const listContainer = this.containerEl.querySelector(
-            ".related-notes-list-container"
-        ) as HTMLElement;
+        const listContainer = this.containerEl.querySelector(".related-notes-list-container") as HTMLElement;
         if (listContainer) {
             listContainer.empty();
             this.renderNoteList(listContainer);
@@ -150,8 +145,8 @@ export class RelatedNotesView extends ItemView {
         const topResults = filteredResults.slice(0, 10);
         for (const {notePath, score} of topResults) {
             const item = container.createEl("div", {cls: "related-note-item"});
-
             const firstRow = item.createEl("div", {cls: "related-note-first-row"});
+
             // Score (conditionally displayed)
             if (this.showScore) {
                 firstRow.createEl("span", {
@@ -163,27 +158,49 @@ export class RelatedNotesView extends ItemView {
             // Title link
             const noteTitle = this.plugin.tagIndexer["noteTitleMap"].get(notePath) ?? notePath;
             const link = firstRow.createEl("a", {
-                cls: "related-note-link",
+                cls: "related-note-link internal-link", // 'internal-link' for Obsidian's hover previews
                 text: noteTitle,
             });
-            link.title = notePath; // tooltip
-            link.onclick = () => {
+
+            // tooltip
+            link.title = notePath; // simple tooltip
+
+            link.addEventListener("mouseover", (event) => {
+                this.app.workspace.trigger("hover-link", {
+                    event,
+                    linktext: this.app.vault.getAbstractFileByPath(notePath).path,
+                    sourcePath: link.pathname,
+                    source: TAG_TACTICIAN_ID,
+                    targetEl: link,
+                    hoverParent: firstRow
+                });
+            });
+
+            link.addEventListener("click", (evt) => {
+                evt.preventDefault();
+                evt.stopPropagation();
                 const file = this.app.vault.getAbstractFileByPath(notePath);
                 if (file instanceof TFile) {
                     this.app.workspace.getLeaf().openFile(file);
                 }
-            };
+            });
+            // Middle-click => open in new tab
+            link.addEventListener("auxclick", (evt) => {
+                evt.preventDefault();
+                evt.stopPropagation();
+                this.app.workspace.openLinkText(notePath, "", true);
+            });
 
             // Optionally show tags
             if (this.showTags) {
                 const noteTags = this.plugin.tagIndexer.getNoteTags(notePath);
                 if (noteTags.size > 0) {
                     const tagLine = item.createEl("div", {cls: "related-note-tags"});
-                    // TODO - move this to the css file
-                    tagLine.style.marginLeft = "1.5em"; // indent
-                    tagLine.style.marginBottom = "0.5rem";
-                    tagLine.style.fontSize = "90%";
-                    noteTags.forEach(t => tagLine.createEl("a", {cls: "tag", text: t, attr: {disabled: true}}));
+
+                    // For each tag, create a small <a> with class="tag"
+                    noteTags.forEach((t) =>
+                        tagLine.createEl("a", {cls: "tag", text: t, attr: {disabled: true}})
+                    );
                 }
             }
         }
@@ -213,9 +230,7 @@ export class RelatedNotesView extends ItemView {
                 continue;
             }
 
-            const hasTagMatch = Array.from(noteTags).some((t) =>
-                t.toLowerCase().includes(filter)
-            );
+            const hasTagMatch = Array.from(noteTags).some((t) => t.toLowerCase().includes(filter));
             if (hasTagMatch) {
                 output.push(item);
             }
