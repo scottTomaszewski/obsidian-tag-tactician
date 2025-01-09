@@ -147,7 +147,8 @@ export class RelatedNotesView extends ItemView {
         }
 
         // Show top ~10 after filtering
-        const topResults = filteredResults.slice(0, 10);
+        // TODO - make this configurable or infinite scrolling
+        const topResults = filteredResults.slice(0, 15);
         for (const { notePath, score } of topResults) {
             const item = container.createEl("div", { cls: "related-note-item" });
             const firstRow = item.createEl("div", { cls: "related-note-first-row" });
@@ -159,10 +160,8 @@ export class RelatedNotesView extends ItemView {
             }
 
             // Title link
-            const noteTitle = this.plugin.tagIndexer["noteTitleMap"].get(notePath) ?? notePath;
-            const link = firstRow.createEl("a", {
-                cls: "related-note-link",
-            });
+            const noteTitle = notePath.split(/[\\/]/).pop();
+            const link = firstRow.createEl("a", {cls: "related-note-link"});
 
             // Instead of using `setText`, we highlight the filter matches in the title
             link.innerHTML = this.highlightMatches(noteTitle, this.filterQuery);
@@ -232,7 +231,7 @@ export class RelatedNotesView extends ItemView {
 
         for (const item of results) {
             const notePath = item.notePath;
-            const title = this.plugin.tagIndexer["noteTitleMap"].get(notePath) ?? notePath;
+            const title = notePath;
             const noteTags = this.plugin.tagIndexer.getNoteTags(notePath);
 
             // If the user typed 'abc', we do a case-insensitive check:
