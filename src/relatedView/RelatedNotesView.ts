@@ -60,11 +60,12 @@ export class RelatedNotesView extends ItemView {
         container.empty();
 
         // Title row (with "Options" gear icon)
-        const headerRow = container.createEl("div", { cls: "related-notes-header" });
-        headerRow.createEl("h2", { text: "Related Notes" });
+        const header = container.createEl("div", { cls: "related-notes-header" });
+        const titleRow = header.createEl("div", { cls: "related-notes-title-row" });
+        titleRow.createEl("h2", { text: "Related Notes" });
 
         // Single "Options" button that opens a menu
-        const optionsBtn = headerRow.createEl("button", { cls: "clickable-icon" });
+        const optionsBtn = titleRow.createEl("button", { cls: "clickable-icon" });
         setIcon(optionsBtn, "gear");
         optionsBtn.style.marginLeft = "1rem";
 
@@ -96,7 +97,7 @@ export class RelatedNotesView extends ItemView {
         };
 
         // Filter input
-        const controls = container.createEl("div", { cls: "related-notes-controls" });
+        const controls = header.createEl("div", { cls: "related-notes-controls" });
         const filterInput = controls.createEl("input", {
             type: "search",
             placeholder: "Filter by name or tag...",

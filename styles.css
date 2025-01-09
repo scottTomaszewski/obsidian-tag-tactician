@@ -97,10 +97,13 @@
 }
 
 .related-notes-container {
-    padding: 0.5rem;
     overflow-y: auto;
 
     .related-notes-header {
+        padding: 0.5rem;
+    }
+
+    .related-notes-title-row {
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -113,7 +116,7 @@
     .related-note-item {
         display: flex;
         align-items: flex-start;
-        padding: 0 0.25rem;
+        padding: 0.5rem;
     }
 
     .related-note-item:nth-child(even) {
@@ -129,6 +132,7 @@
         align-items: flex-start;
         flex-direction: column;
         padding: 0 0.5rem;
+        width: 100%
     }
 
     .related-note-link {
@@ -137,15 +141,16 @@
         text-overflow: ellipsis;
         overflow: hidden;
         white-space: nowrap;
-
     }
 
     .related-note-tags {
         font-size: 90%;
-        padding: 0.5rem 0;
+
+        display: inline-flex;
+        flex-wrap: wrap;
 
         .tag {
-            margin-right: 0.25rem;
+            margin: 0.5rem 0.25rem 0 0;
             cursor: default;
         }
     }
