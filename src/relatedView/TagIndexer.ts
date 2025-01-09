@@ -107,13 +107,11 @@ export class TagIndexer {
             // Title similarity
             const candidateTitle = candidateFile.basename.toLowerCase();
             let titleSimScore = 0;
-            if (candidateTitle.includes(currentTitle) || currentTitle.includes(candidateTitle)) {
-                titleSimScore = 1;
-            }
+            titleSimScore += levenshteinSimilarity(currentTitle, candidateTitle);
 
             const totalScore = prefixOverlapScore + 2 * titleSimScore;
             if (totalScore > 0) {
-                results.push({ notePath: candidatePath, score: totalScore });
+                results.push({notePath: candidatePath, score: totalScore});
             }
         }
 
@@ -178,4 +176,49 @@ function gatherAllPrefixSegmentsForNote(noteTags: Set<string>): Set<string> {
         }
     }
     return allSegments;
+}
+
+// This algorithm calculates the number of edits (insertions, deletions, or substitutions) required to transform
+// one string into another. Good for measuring the difference between two strings.
+function levenshteinDistance(str1: string, str2: string): number {
+    const m = str1.length;
+    const n = str2.length;
+
+    const dp: number[][] = [];
+
+    for (let i = 0; i <= m; i++) {
+        dp[i] = [i];
+    }
+
+    for (let j = 0; j <= n; j++) {
+        dp[0][j] = j;
+    }
+
+    for (let i = 1; i <= m; i++) {
+        for (let j = 1; j <= n; j++) {
+            const cost = str1[i - 1] === str2[j - 1] ? 0 : 1;
+            dp[i][j] = Math.min(
+                dp[i - 1][j] + 1, // deletion
+                dp[i][j - 1] + 1, // insertion
+                dp[i - 1][j - 1] + cost // substitution
+            );
+        }
+    }
+
+    return dp[m][n];
+}
+
+// See levenshteinDistance, but this normalizes it
+function levenshteinSimilarity(s1: string, s2: string): number {
+    var longer = s1;
+    var shorter = s2;
+    if (s1.length < s2.length) {
+        longer = s2;
+        shorter = s1;
+    }
+    var longerLength = longer.length;
+    if (longerLength == 0) {
+        return 1.0;
+    }
+    return (longerLength - levenshteinDistance(longer, shorter)) / parseFloat(longerLength);
 }

@@ -146,22 +146,24 @@ export class RelatedNotesView extends ItemView {
             return;
         }
 
-        // Show top ~10 after filtering
+        // Show top results after filtering
         // TODO - make this configurable or infinite scrolling
-        const topResults = filteredResults.slice(0, 15);
+        const topResults = filteredResults.slice(0, 20);
         for (const { notePath, score } of topResults) {
             const item = container.createEl("div", { cls: "related-note-item" });
-            const firstRow = item.createEl("div", { cls: "related-note-first-row" });
 
             // Score (conditionally displayed)
             if (this.showScore) {
-                const scoreEl = firstRow.createEl("span", { cls: "related-note-score" });
-                scoreEl.setText(`${score}`);
+                const scoreEl = item.createEl("span", { cls: "related-note-score" });
+                scoreEl.setText(`${score.toPrecision(2)}`);
+                scoreEl.title = "Score: " + score;
             }
+
+            const itemContent = item.createEl("div", { cls: "related-note-item-content" });
 
             // Title link
             const noteTitle = notePath.split(/[\\/]/).pop();
-            const link = firstRow.createEl("a", {cls: "related-note-link"});
+            const link = itemContent.createEl("a", {cls: "related-note-link"});
 
             // Instead of using `setText`, we highlight the filter matches in the title
             link.innerHTML = this.highlightMatches(noteTitle, this.filterQuery);
@@ -177,7 +179,7 @@ export class RelatedNotesView extends ItemView {
                     sourcePath: link.pathname,
                     source: RELATED_NOTES_VIEW_TYPE,
                     targetEl: link,
-                    hoverParent: firstRow
+                    hoverParent: itemContent
                 });
             });
 
@@ -200,7 +202,7 @@ export class RelatedNotesView extends ItemView {
             if (this.showTags) {
                 const noteTags = this.plugin.tagIndexer.getNoteTags(notePath);
                 if (noteTags.size > 0) {
-                    const tagLine = item.createEl("div", { cls: "related-note-tags" });
+                    const tagLine = itemContent.createEl("div", { cls: "related-note-tags" });
 
                     // For each tag, create a small <a> with class="tag"
                     noteTags.forEach((tagString) => {
