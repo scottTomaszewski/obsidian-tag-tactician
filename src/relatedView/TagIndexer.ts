@@ -111,9 +111,7 @@ export class TagIndexer {
             // Path similarity
             let pathSimScore = 0
             if (candidateFile.parent.path !== "/" && file.parent.path !== "/") {
-                console.log(candidateFile.parent.path + " vs " + file.parent.path);
                 pathSimScore = levenshteinSimilarity(file.path, candidatePath);
-                console.log(candidateFile.path + " " + pathSimScore);
             }
 
             const totalScore = prefixOverlapScore + (2 * titleSimScore) + (1 * pathSimScore);
