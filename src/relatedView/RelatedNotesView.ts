@@ -94,6 +94,17 @@ export class RelatedNotesView extends ItemView {
                     });
             });
 
+            menu.addSeparator();
+
+            // Menu item: Refresh list
+            menu.addItem((item) => {
+                item
+                    .setTitle("Refresh Notes")
+                    .onClick(() => {
+                        this.refreshList();
+                    });
+            });
+
             menu.showAtMouseEvent(evt);
         };
 
@@ -188,6 +199,7 @@ export class RelatedNotesView extends ItemView {
                 });
             });
 
+            // Left-click => open file
             link.addEventListener("click", (evt) => {
                 evt.preventDefault();
                 evt.stopPropagation();
@@ -197,6 +209,7 @@ export class RelatedNotesView extends ItemView {
                     console.error(`noteFile at ${notePath} is not a TFile?`)
                 }
             });
+
             // Middle-click => open in new tab
             link.addEventListener("auxclick", (evt) => {
                 evt.preventDefault();
