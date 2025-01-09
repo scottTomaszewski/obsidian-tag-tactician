@@ -82,9 +82,6 @@ export class TagIndexer {
         this.noteTagsMap.set(notePath, tags);
     }
 
-    /**
-     * Return an array of "related notes" to `currentNotePath`, sorted by a custom score.
-     */
     public computeRelatedNotes(currentNotePath: string): Array<{ notePath: string; score: number }> {
         // 1) figure out the tags for the current note
         const file = this.app.vault.getAbstractFileByPath(currentNotePath);
@@ -111,33 +108,81 @@ export class TagIndexer {
             }
         }
 
-        // 2) gather all notes that share at least one of those tags
+        // expand the current note's tags into prefix segments
+        const currentNoteSegments = gatherAllPrefixSegmentsForNote(currTags);
+
+        // 2) gather candidates: all notes that share at least one *full tag* with the current note
+        // (We could also do a big union. But let's keep it similar to your existing logic.)
         const overlapCount = new Map<string, number>();
 
         for (const tag of currTags) {
             const noteSet = this.tagIndex.get(tag);
             if (!noteSet) continue;
-            for (const notePath of noteSet) {
-                if (notePath === currentNotePath) continue; // skip self
-                overlapCount.set(notePath, (overlapCount.get(notePath) ?? 0) + 1);
+            for (const candidatePath of noteSet) {
+                if (candidatePath === currentNotePath) continue; // skip self
+                // We'll just track that this candidate is "in play".
+                // We'll compute a final overlap score below.
+                overlapCount.set(candidatePath, 0);
             }
         }
 
-        // 3) compute a simple title similarity
+        // 3) compute score for each candidate, including prefix overlap + title similarity
         const currentTitle = (this.noteTitleMap.get(currentNotePath) ?? "").toLowerCase();
 
         const results: { notePath: string; score: number }[] = [];
-        overlapCount.forEach((count, notePath) => {
+
+        // For each candidate that at least shares one *full tag* with the current note,
+        // let's compute the deeper prefix-segment overlap.
+        overlapCount.forEach((dummy, candidatePath) => {
+            // get candidate's tag set
+            // First, gather all "full" tags from the candidate
+            const candFile = this.app.vault.getAbstractFileByPath(candidatePath);
+            if (!(candFile instanceof TFile)) return;
+
+            const candCache = this.app.metadataCache.getFileCache(candFile);
+            if (!candCache) return;
+
+            const candTags: Set<string> = new Set();
+            if (candCache.tags) {
+                for (const t of candCache.tags) {
+                    let rawTag = t.tag;
+                    if (rawTag.startsWith("#")) rawTag = rawTag.substring(1);
+                    candTags.add(rawTag);
+                }
+            }
+            if (candCache.frontmatter && candCache.frontmatter.tags) {
+                const fmTags = candCache.frontmatter.tags;
+                if (Array.isArray(fmTags)) {
+                    fmTags.forEach((tag) => typeof tag === "string" && candTags.add(tag));
+                } else if (typeof fmTags === "string") {
+                    fmTags.split(/[, ]+/).forEach((t) => t && candTags.add(t));
+                }
+            }
+
+            // expand to prefix segments
+            const candidateSegments = gatherAllPrefixSegmentsForNote(candTags);
+
+            // how many prefix segments are in common?
+            let prefixOverlapScore = 0;
+            for (const seg of candidateSegments) {
+                if (currentNoteSegments.has(seg)) {
+                    prefixOverlapScore += 1;
+                }
+            }
+
+            // plus title similarity
             let titleSimScore = 0;
-            const candidateTitle = (this.noteTitleMap.get(notePath) ?? "").toLowerCase();
+            const candidateTitle = (this.noteTitleMap.get(candidatePath) ?? "").toLowerCase();
             if (candidateTitle.includes(currentTitle) || currentTitle.includes(candidateTitle)) {
                 titleSimScore = 1;
             }
-            const totalScore = count + 2 * titleSimScore;
-            results.push({ notePath, score: totalScore });
+
+            // total score
+            const totalScore = prefixOverlapScore + 2 * titleSimScore;
+            results.push({ notePath: candidatePath, score: totalScore });
         });
 
-        // 4) sort descending by score
+        // 4) sort descending
         results.sort((a, b) => b.score - a.score);
         return results;
     }
@@ -145,4 +190,37 @@ export class TagIndexer {
     public getNoteTags(notePath: string): Set<string> {
         return this.noteTagsMap.get(notePath) ?? new Set();
     }
+}
+
+/**
+ * Expand "person/family/child" into an array (or set) of all prefix segments:
+ * ["person", "person/family", "person/family/child"].
+ */
+function expandTagIntoPrefixes(fullTag: string): string[] {
+    const segments = fullTag.split("/");
+    const prefixes: string[] = [];
+    for (let i = 1; i <= segments.length; i++) {
+        // Join the first i segments with "/"
+        prefixes.push(segments.slice(0, i).join("/"));
+    }
+    return prefixes;
+}
+
+/**
+ * Build a set of all "virtual tags" (prefix segments) for a note.
+ * e.g. if note has tags ["person/family", "career/company_name"],
+ * this might return [
+ *   "person", "person/family",
+ *   "career", "career/company_name"
+ * ]
+ */
+function gatherAllPrefixSegmentsForNote(noteTags: Set<string>): Set<string> {
+    const allSegments = new Set<string>();
+    for (const tag of noteTags) {
+        const prefixes = expandTagIntoPrefixes(tag);
+        for (const p of prefixes) {
+            allSegments.add(p);
+        }
+    }
+    return allSegments;
 }
