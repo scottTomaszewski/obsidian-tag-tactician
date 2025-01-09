@@ -1,5 +1,5 @@
-import {ItemView, WorkspaceLeaf, TFile, Menu, setIcon} from "obsidian";
-import TagTacticianPlugin, {TAG_TACTICIAN_ID} from "../../main";
+import { ItemView, WorkspaceLeaf, TFile, Menu, setIcon } from "obsidian";
+import TagTacticianPlugin, { TAG_TACTICIAN_ID } from "../../main";
 
 /**
  * Unique ID for the related notes view (shared with main.ts).
@@ -56,11 +56,11 @@ export class RelatedNotesView extends ItemView {
         container.empty();
 
         // Title row (with "Options" gear icon)
-        const headerRow = container.createEl("div", {cls: "related-notes-header"});
-        headerRow.createEl("h2", {text: "Related Notes"});
+        const headerRow = container.createEl("div", { cls: "related-notes-header" });
+        headerRow.createEl("h2", { text: "Related Notes" });
 
         // Single "Options" button that opens a menu
-        const optionsBtn = headerRow.createEl("button", {cls: "clickable-icon"});
+        const optionsBtn = headerRow.createEl("button", { cls: "clickable-icon" });
         setIcon(optionsBtn, "gear");
         optionsBtn.style.marginLeft = "1rem";
 
@@ -92,10 +92,10 @@ export class RelatedNotesView extends ItemView {
         };
 
         // Filter input
-        const controls = container.createEl("div", {cls: "related-notes-controls"});
+        const controls = container.createEl("div", { cls: "related-notes-controls" });
         const filterInput = controls.createEl("input", {
             type: "search",
-            placeholder: "Filter related notes...",
+            placeholder: "Filter by name or tag...",
             cls: "filter-input",
         });
         filterInput.value = this.filterQuery;
@@ -106,7 +106,7 @@ export class RelatedNotesView extends ItemView {
         };
 
         // Container for the note list
-        const listContainer = container.createEl("div", {cls: "related-notes-list-container"});
+        const listContainer = container.createEl("div", { cls: "related-notes-list-container" });
         this.renderNoteList(listContainer);
     }
 
@@ -130,7 +130,7 @@ export class RelatedNotesView extends ItemView {
         const results = this.plugin.computeRelatedNotes();
 
         if (!results.length) {
-            container.createEl("p", {text: "No related notes found."});
+            container.createEl("p", { text: "No related notes found." });
             return;
         }
 
@@ -138,30 +138,30 @@ export class RelatedNotesView extends ItemView {
         const filteredResults = this.applyFilter(results);
 
         if (!filteredResults.length) {
-            container.createEl("p", {text: "No notes match your filter."});
+            container.createEl("p", { text: "No notes match your filter." });
             return;
         }
 
         // Show top ~10 after filtering
         const topResults = filteredResults.slice(0, 10);
-        for (const {notePath, score} of topResults) {
-            const item = container.createEl("div", {cls: "related-note-item"});
-            const firstRow = item.createEl("div", {cls: "related-note-first-row"});
+        for (const { notePath, score } of topResults) {
+            const item = container.createEl("div", { cls: "related-note-item" });
+            const firstRow = item.createEl("div", { cls: "related-note-first-row" });
 
             // Score (conditionally displayed)
             if (this.showScore) {
-                firstRow.createEl("span", {
-                    text: `${score}`,
-                    cls: "related-note-score",
-                });
+                const scoreEl = firstRow.createEl("span", { cls: "related-note-score" });
+                scoreEl.setText(`${score}`);
             }
 
             // Title link
             const noteTitle = this.plugin.tagIndexer["noteTitleMap"].get(notePath) ?? notePath;
             const link = firstRow.createEl("a", {
                 cls: "related-note-link internal-link", // 'internal-link' for Obsidian's hover previews
-                text: noteTitle,
             });
+
+            // Instead of using `setText`, we highlight the filter matches in the title
+            link.innerHTML = this.highlightMatches(noteTitle, this.filterQuery);
 
             // tooltip
             link.title = notePath;
@@ -196,12 +196,17 @@ export class RelatedNotesView extends ItemView {
             if (this.showTags) {
                 const noteTags = this.plugin.tagIndexer.getNoteTags(notePath);
                 if (noteTags.size > 0) {
-                    const tagLine = item.createEl("div", {cls: "related-note-tags"});
+                    const tagLine = item.createEl("div", { cls: "related-note-tags" });
 
                     // For each tag, create a small <a> with class="tag"
-                    noteTags.forEach((t) =>
-                        tagLine.createEl("a", {cls: "tag", text: t, attr: {disabled: true}})
-                    );
+                    noteTags.forEach((tagString) => {
+                        const tagA = tagLine.createEl("a", {
+                            cls: "tag",
+                            attr: { disabled: true }
+                        });
+                        // highlight filter matches in tag
+                        tagA.innerHTML = this.highlightMatches(tagString, this.filterQuery);
+                    });
                 }
             }
         }
@@ -225,17 +230,43 @@ export class RelatedNotesView extends ItemView {
             const title = this.plugin.tagIndexer["noteTitleMap"].get(notePath) ?? notePath;
             const noteTags = this.plugin.tagIndexer.getNoteTags(notePath);
 
-            // Check if the title or any tag includes the filter text
-            if (title.toLowerCase().includes(filter)) {
+            // If the user typed 'abc', we do a case-insensitive check:
+            const lowerTitle = title.toLowerCase();
+            if (lowerTitle.includes(filter)) {
                 output.push(item);
                 continue;
             }
 
-            const hasTagMatch = Array.from(noteTags).some((t) => t.toLowerCase().includes(filter));
+            // check tags
+            const hasTagMatch = Array.from(noteTags).some(
+                (t) => t.toLowerCase().includes(filter)
+            );
             if (hasTagMatch) {
                 output.push(item);
             }
         }
         return output;
+    }
+
+    /**
+     * Utility function that highlights all instances of `filter`
+     * inside `text`, wrapping them in <mark>...</mark> (case-insensitive).
+     */
+    private highlightMatches(text: string, filter: string): string {
+        if (!filter) return text;
+
+        // Create a regex that finds all (case-insensitive) occurrences of `filter`
+        // and wraps them in <mark>...</mark>.
+        const re = new RegExp(`(${this.escapeRegex(filter)})`, "gi");
+        return text.replace(re, "<span class='highlight'>$1</span>");
+    }
+
+    /**
+     * Escape special regex characters in the filter string.
+     * e.g. if filter is "foo?", we want to match literal "?",
+     * not a wildcard.
+     */
+    private escapeRegex(str: string): string {
+        return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     }
 }

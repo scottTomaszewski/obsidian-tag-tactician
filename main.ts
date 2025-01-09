@@ -12,8 +12,8 @@ import {applyTagUpdates} from "./src/io/FileTagProcessor";
 import {TagTacticianSettingTab} from "./src/settings/TagTacticianSettingTab";
 
 import {TagTacticianSettings, DEFAULT_SETTINGS} from "./src/settings/PluginSettings";
-import {TagIndexer} from "./src/tagIndex/TagIndexer";
-import {RelatedNotesView, RELATED_NOTES_VIEW_TYPE} from "./src/tagIndex/RelatedNotesView";
+import {TagIndexer} from "./src/relatedView/TagIndexer";
+import {RelatedNotesView, RELATED_NOTES_VIEW_TYPE} from "./src/relatedView/RelatedNotesView";
 
 export const TAG_TACTICIAN_ID = "tag-tactician"
 

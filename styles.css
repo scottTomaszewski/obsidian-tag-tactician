@@ -145,6 +145,10 @@
             margin-right: 0.25rem;
         }
     }
+
+    .highlight {
+        background-color: var(--text-highlight-bg);
+    }
 }
 
 /* The "File Selection" setting row (for Select All buttons) */
