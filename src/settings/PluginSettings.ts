@@ -8,6 +8,8 @@ export interface TagTacticianSettings {
     defaultShowTags: boolean;
     // Whether to show scores by default in Related Notes
     defaultShowScore: boolean;
+    // Minimum score to show in Related Notes
+    minimumRelatedNotesScore: number;
 }
 
 export const DEFAULT_SETTINGS: TagTacticianSettings = {
@@ -15,4 +17,5 @@ export const DEFAULT_SETTINGS: TagTacticianSettings = {
     tagListStyle: "hyphens",
     defaultShowTags: true,
     defaultShowScore: true,
+    minimumRelatedNotesScore: 1,
 };

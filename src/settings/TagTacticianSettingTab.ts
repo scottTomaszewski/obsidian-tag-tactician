@@ -13,9 +13,10 @@ export class TagTacticianSettingTab extends PluginSettingTab {
         const { containerEl } = this;
         containerEl.empty();
 
-        containerEl.createEl("h2", { text: "Tag Tactician Settings" });
+        containerEl.createEl("h1", { text: "Tag Tactician Settings" });
 
-        // Existing settings...
+        containerEl.createEl("h3", { text: "Bulk Operation Settings" });
+
         new Setting(containerEl)
             .setName("Show Warning for Non-Markdown Files")
             .setDesc("If enabled, the modal will display a warning for non-Markdown files.")
@@ -42,9 +43,12 @@ export class TagTacticianSettingTab extends PluginSettingTab {
                     });
             });
 
-        // NEW: toggle for defaultShowTags
+        containerEl.createEl("br");
+        containerEl.createEl("br");
+        containerEl.createEl("h3", { text: "Related Notes View Settings" });
+
         new Setting(containerEl)
-            .setName("Show Tags by Default (Related Notes)")
+            .setName("Show Tags by Default")
             .setDesc("If enabled, the Related Notes sidebar will initially show tags.")
             .addToggle((toggle) => {
                 toggle
@@ -55,15 +59,27 @@ export class TagTacticianSettingTab extends PluginSettingTab {
                     });
             });
 
-        // NEW: toggle for defaultShowScore
         new Setting(containerEl)
-            .setName("Show Score by Default (Related Notes)")
+            .setName("Show Score by Default")
             .setDesc("If enabled, the Related Notes sidebar will initially show note scores.")
             .addToggle((toggle) => {
                 toggle
                     .setValue(this.plugin.settings.defaultShowScore)
                     .onChange(async (val) => {
                         this.plugin.settings.defaultShowScore = val;
+                        await this.plugin.saveSettings();
+                    });
+            });
+
+        new Setting(containerEl)
+            .setName("Hide results with score below")
+            .setDesc("Hide notes in the Related Notes sidebar with a score below this threshold.")
+            .addText((text) => {
+                text
+                    .setPlaceholder("1")
+                    .setValue(this.plugin.settings.minimumRelatedNotesScore.toString())
+                    .onChange(async (val) => {
+                        this.plugin.settings.minimumRelatedNotesScore = Number(val);
                         await this.plugin.saveSettings();
                     });
             });

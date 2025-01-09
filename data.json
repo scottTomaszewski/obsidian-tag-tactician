@@ -2,5 +2,6 @@
   "showNonMarkdownWarning": true,
   "tagListStyle": "brackets",
   "defaultShowTags": true,
-  "defaultShowScore": true
+  "defaultShowScore": true,
+  "minimumRelatedNotesScore": 1
 }
