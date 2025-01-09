@@ -151,7 +151,7 @@ export class RelatedNotesView extends ItemView {
             // Score (conditionally displayed)
             if (this.showScore) {
                 firstRow.createEl("span", {
-                    text: `(${score}) `,
+                    text: `${score}`,
                     cls: "related-note-score",
                 });
             }
