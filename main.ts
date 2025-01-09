@@ -15,8 +15,6 @@ import {TagTacticianSettings, DEFAULT_SETTINGS} from "./src/settings/PluginSetti
 import {TagIndexer} from "./src/relatedView/TagIndexer";
 import {RelatedNotesView, RELATED_NOTES_VIEW_TYPE} from "./src/relatedView/RelatedNotesView";
 
-export const TAG_TACTICIAN_ID = "tag-tactician"
-
 export default class TagTacticianPlugin extends Plugin {
     settings: TagTacticianSettings;
 
@@ -72,7 +70,7 @@ export default class TagTacticianPlugin extends Plugin {
 
         // Handle note previews in the "related notes" view
         this.registerHoverLinkSource(
-            TAG_TACTICIAN_ID,
+            RELATED_NOTES_VIEW_TYPE,
             {
                 display: 'Related Notes',
                 defaultMod: true,

@@ -1,5 +1,5 @@
-import { ItemView, WorkspaceLeaf, TFile, Menu, setIcon } from "obsidian";
-import TagTacticianPlugin, { TAG_TACTICIAN_ID } from "../../main";
+import {ItemView, WorkspaceLeaf, TFile, Menu, setIcon, IconName} from "obsidian";
+import TagTacticianPlugin from "../../main";
 
 /**
  * Unique ID for the related notes view (shared with main.ts).
@@ -34,6 +34,10 @@ export class RelatedNotesView extends ItemView {
 
     getDisplayText(): string {
         return "Related Notes";
+    }
+
+    getIcon(): IconName {
+        return "git-compare";
     }
 
     async onOpen() {
@@ -157,7 +161,7 @@ export class RelatedNotesView extends ItemView {
             // Title link
             const noteTitle = this.plugin.tagIndexer["noteTitleMap"].get(notePath) ?? notePath;
             const link = firstRow.createEl("a", {
-                cls: "related-note-link internal-link", // 'internal-link' for Obsidian's hover previews
+                cls: "related-note-link",
             });
 
             // Instead of using `setText`, we highlight the filter matches in the title
@@ -166,12 +170,13 @@ export class RelatedNotesView extends ItemView {
             // tooltip
             link.title = notePath;
 
+            // hover preview
             link.addEventListener("mouseover", (event) => {
                 this.app.workspace.trigger("hover-link", {
                     event,
                     linktext: this.app.vault.getAbstractFileByPath(notePath).path,
                     sourcePath: link.pathname,
-                    source: TAG_TACTICIAN_ID,
+                    source: RELATED_NOTES_VIEW_TYPE,
                     targetEl: link,
                     hoverParent: firstRow
                 });
