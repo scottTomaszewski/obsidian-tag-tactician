@@ -71,7 +71,7 @@ export class TagIndexer {
         if (!currCache) return [];
 
         // gather current note's full tags from the cache
-        const currFullTags = gatherTagsFromCache(currCache, file);
+        const currFullTags = gatherTagsFromCache(currCache);
 
         // expand to prefix segments
         const currentNoteSegments = gatherAllPrefixSegmentsForNote(currFullTags);
@@ -93,7 +93,7 @@ export class TagIndexer {
             const candCache = this.app.metadataCache.getFileCache(candidateFile);
             if (!candCache) continue;
 
-            const candTags = gatherTagsFromCache(candCache, candidateFile);
+            const candTags = gatherTagsFromCache(candCache);
             const candidateSegments = gatherAllPrefixSegmentsForNote(candTags);
 
             // compute prefix overlap
@@ -106,10 +106,17 @@ export class TagIndexer {
 
             // Title similarity
             const candidateTitle = candidateFile.basename.toLowerCase();
-            let titleSimScore = 0;
-            titleSimScore += levenshteinSimilarity(currentTitle, candidateTitle);
+            const titleSimScore = levenshteinSimilarity(currentTitle, candidateTitle);
 
-            const totalScore = prefixOverlapScore + 2 * titleSimScore;
+            // Path similarity
+            let pathSimScore = 0
+            if (candidateFile.parent.path !== "/" && file.parent.path !== "/") {
+                console.log(candidateFile.parent.path + " vs " + file.parent.path);
+                pathSimScore = levenshteinSimilarity(file.path, candidatePath);
+                console.log(candidateFile.path + " " + pathSimScore);
+            }
+
+            const totalScore = prefixOverlapScore + (2 * titleSimScore) + (1 * pathSimScore);
             if (totalScore > 0) {
                 results.push({notePath: candidatePath, score: totalScore});
             }
@@ -131,7 +138,7 @@ export class TagIndexer {
 /**
  * Helper: gather full tags from a file's cache + fallback to file basename if no frontmatter
  */
-function gatherTagsFromCache(cache: CachedMetadata, file: TFile): Set<string> {
+export function gatherTagsFromCache(cache: CachedMetadata): Set<string> {
     const tags: Set<string> = new Set();
     if (cache.tags) {
         for (const t of cache.tags) {

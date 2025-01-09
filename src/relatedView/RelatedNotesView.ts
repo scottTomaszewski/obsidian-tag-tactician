@@ -1,5 +1,6 @@
 import {ItemView, WorkspaceLeaf, TFile, Menu, setIcon, IconName} from "obsidian";
 import TagTacticianPlugin from "../../main";
+import {gatherTagsFromCache} from "./TagIndexer";
 
 /**
  * Unique ID for the related notes view (shared with main.ts).
@@ -148,11 +149,12 @@ export class RelatedNotesView extends ItemView {
         }
 
         // Show top results after filtering
-        // TODO - make this configurable or infinite scrolling
+        // TODO - make this slice configurable or infinite scrolling
         const topResults = filteredResults
             .filter(r => r.score >= this.plugin.settings.minimumRelatedNotesScore)
             .slice(0, 20);
         for (const { notePath, score } of topResults) {
+            const noteFile = this.app.vault.getAbstractFileByPath(notePath);
             const item = container.createEl("div", { cls: "related-note-item" });
 
             // Score (conditionally displayed)
@@ -189,9 +191,10 @@ export class RelatedNotesView extends ItemView {
             link.addEventListener("click", (evt) => {
                 evt.preventDefault();
                 evt.stopPropagation();
-                const file = this.app.vault.getAbstractFileByPath(notePath);
-                if (file instanceof TFile) {
-                    this.app.workspace.getLeaf().openFile(file);
+                if (noteFile instanceof TFile) {
+                    this.app.workspace.getLeaf().openFile(noteFile);
+                } else {
+                    console.error(`noteFile at ${notePath} is not a TFile?`)
                 }
             });
             // Middle-click => open in new tab
@@ -203,7 +206,7 @@ export class RelatedNotesView extends ItemView {
 
             // Optionally show tags
             if (this.showTags) {
-                const noteTags = this.plugin.tagIndexer.getNoteTags(notePath);
+                const noteTags = gatherTagsFromCache(this.app.metadataCache.getFileCache(noteFile))
                 if (noteTags.size > 0) {
                     const tagLine = itemContent.createEl("div", { cls: "related-note-tags" });
 
