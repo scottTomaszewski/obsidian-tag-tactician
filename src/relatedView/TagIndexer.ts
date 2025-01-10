@@ -123,7 +123,7 @@ export class TagIndexer {
                 linkScore++;
             }
 
-            const totalScore = prefixOverlapScore + (2 * titleSimScore) + (1 * pathSimScore) + (1 * linkScore);
+            const totalScore = prefixOverlapScore + (1 * titleSimScore) + (1 * pathSimScore) + (1 * linkScore);
             if (totalScore > 0) {
                 results.push({notePath: candidatePath, score: totalScore});
             }

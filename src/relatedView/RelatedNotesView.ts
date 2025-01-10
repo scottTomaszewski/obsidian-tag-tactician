@@ -162,8 +162,7 @@ export class RelatedNotesView extends ItemView {
         // Show top results after filtering
         // TODO - make this slice configurable or infinite scrolling
         const topResults = filteredResults
-            .filter(r => r.score >= this.plugin.settings.minimumRelatedNotesScore)
-            .slice(0, 20);
+            .filter(r => r.score >= this.plugin.settings.minimumRelatedNotesScore);
         for (const { notePath, score } of topResults) {
             const noteFile = this.app.vault.getAbstractFileByPath(notePath);
             const item = container.createEl("div", { cls: "related-note-item" });
