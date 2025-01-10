@@ -114,7 +114,16 @@ export class TagIndexer {
                 pathSimScore = levenshteinSimilarity(file.path, candidatePath);
             }
 
-            const totalScore = prefixOverlapScore + (2 * titleSimScore) + (1 * pathSimScore);
+            // Links to each other
+            let linkScore = 0;
+            if (candCache.links?.map(l => l.link).includes(file.basename)) {
+                linkScore++;
+            }
+            if (currCache.links?.map(l => l.link).includes(candidateFile.basename)) {
+                linkScore++;
+            }
+
+            const totalScore = prefixOverlapScore + (2 * titleSimScore) + (1 * pathSimScore) + (1 * linkScore);
             if (totalScore > 0) {
                 results.push({notePath: candidatePath, score: totalScore});
             }
