@@ -41,7 +41,7 @@ export default class TagTacticianPlugin extends Plugin {
         );
 
         // Initialize the TagIndexer (for "Related Notes")
-        this.tagIndexer = new TagIndexer(this.app);
+        this.tagIndexer = new TagIndexer(this);
 
         // Register the "Related Notes" view
         this.registerView(RELATED_NOTES_VIEW_TYPE, (leaf) => new RelatedNotesView(leaf, this));

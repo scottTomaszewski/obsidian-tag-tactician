@@ -83,5 +83,60 @@ export class TagTacticianSettingTab extends PluginSettingTab {
                         await this.plugin.saveSettings();
                     });
             });
+
+        containerEl.createEl("h4", { text: "Related Notes Score Weighting Adjustments" });
+        containerEl.createEl("p", { text: "Higher values increase importance." });
+
+        new Setting(containerEl)
+            .setName("Tag Similarity Weight")
+            .setDesc("The weight of tag similarity in the Related Notes score.")
+            .addText((text) => {
+                text
+                    .setPlaceholder("1.0")
+                    .setValue(this.plugin.settings.weightTagSimilarity.toString())
+                    .onChange(async (val) => {
+                        this.plugin.settings.weightTagSimilarity = Number(val);
+                        await this.plugin.saveSettings();
+                    });
+            });
+
+        new Setting(containerEl)
+            .setName("Title Similarity Weight")
+            .setDesc("The weight of file name similarity in the Related Notes score.")
+            .addText((text) => {
+                text
+                    .setPlaceholder("1.0")
+                    .setValue(this.plugin.settings.weightTitleSimilarity.toString())
+                    .onChange(async (val) => {
+                        this.plugin.settings.weightTitleSimilarity = Number(val);
+                        await this.plugin.saveSettings();
+                    });
+            });
+
+        new Setting(containerEl)
+            .setName("Path Similarity Weight")
+            .setDesc("The weight of file path similarity in the Related Notes score.")
+            .addText((text) => {
+                text
+                    .setPlaceholder("1.0")
+                    .setValue(this.plugin.settings.weightPathSimilarity.toString())
+                    .onChange(async (val) => {
+                        this.plugin.settings.weightPathSimilarity = Number(val);
+                        await this.plugin.saveSettings();
+                    });
+            });
+
+        new Setting(containerEl)
+            .setName("Link Interconnections Weight")
+            .setDesc("The weight of notes having links to each other in the Related Notes score.")
+            .addText((text) => {
+                text
+                    .setPlaceholder("1.0")
+                    .setValue(this.plugin.settings.weightLinkInterconnections.toString())
+                    .onChange(async (val) => {
+                        this.plugin.settings.weightLinkInterconnections = Number(val);
+                        await this.plugin.saveSettings();
+                    });
+            });
     }
 }

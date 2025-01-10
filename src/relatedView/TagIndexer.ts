@@ -1,15 +1,16 @@
 import {App, CachedMetadata, TFile} from "obsidian";
+import TagTacticianPlugin from "../../main";
 
 /**
  * TagIndexer: Responsible for scanning notes for tags/titles,
  * but no longer relies on a big index for computing related notes.
  */
 export class TagIndexer {
-    private app: App;
+    private plugin: TagTacticianPlugin;
     private noteTagsMap: Map<string, Set<string>> = new Map();
 
-    constructor(app: App) {
-        this.app = app;
+    constructor(plugin: TagTacticianPlugin) {
+        this.plugin = plugin;
     }
 
     /**
@@ -17,7 +18,7 @@ export class TagIndexer {
      * (Optional, if you want to skip repeated metadata lookups.)
      */
     public async buildIndex(): Promise<void> {
-        const allFiles = this.app.vault.getMarkdownFiles();
+        const allFiles = this.plugin.app.vault.getMarkdownFiles();
         this.noteTagsMap.clear();
 
         for (const file of allFiles) {
@@ -29,7 +30,7 @@ export class TagIndexer {
 
     private async indexSingleFile(file: TFile) {
         const notePath = file.path;
-        const cache = this.app.metadataCache.getFileCache(file);
+        const cache = this.plugin.app.metadataCache.getFileCache(file);
         if (!cache) {
             return;
         }
@@ -64,10 +65,10 @@ export class TagIndexer {
      */
     public computeRelatedNotes(currentNotePath: string): Array<{ notePath: string; score: number }> {
         // 1) Get current note's tags and expand into prefix segments
-        const file = this.app.vault.getAbstractFileByPath(currentNotePath);
+        const file = this.plugin.app.vault.getAbstractFileByPath(currentNotePath);
         if (!(file instanceof TFile)) return [];
 
-        const currCache = this.app.metadataCache.getFileCache(file);
+        const currCache = this.plugin.app.metadataCache.getFileCache(file);
         if (!currCache) return [];
 
         // gather current note's full tags from the cache
@@ -80,8 +81,13 @@ export class TagIndexer {
         const currentTitle = file.basename.toLowerCase();
 
         // 2) Iterate *every* note in the vault, compute overlap
-        const allFiles = this.app.vault.getMarkdownFiles();
+        const allFiles = this.plugin.app.vault.getMarkdownFiles();
         const results: { notePath: string; score: number }[] = [];
+
+        const weightTagSimilarity = this.plugin.settings.weightTagSimilarity;
+        const weightTitleSimilarity = this.plugin.settings.weightTitleSimilarity;
+        const weightPathSimilarity = this.plugin.settings.weightPathSimilarity;
+        const weightLinkInterconnections = this.plugin.settings.weightLinkInterconnections;
 
         for (const candidateFile of allFiles) {
             const candidatePath = candidateFile.path;
@@ -90,7 +96,7 @@ export class TagIndexer {
             }
 
             // gather candidate's tags from the cache
-            const candCache = this.app.metadataCache.getFileCache(candidateFile);
+            const candCache = this.plugin.app.metadataCache.getFileCache(candidateFile);
             if (!candCache) continue;
 
             const candTags = gatherTagsFromCache(candCache);
@@ -123,7 +129,11 @@ export class TagIndexer {
                 linkScore++;
             }
 
-            const totalScore = prefixOverlapScore + (1 * titleSimScore) + (1 * pathSimScore) + (1 * linkScore);
+            const totalScore = 0
+                + (weightTagSimilarity * prefixOverlapScore)
+                + (weightTitleSimilarity * titleSimScore)
+                + (weightPathSimilarity * pathSimScore)
+                + (weightLinkInterconnections * linkScore);
             if (totalScore > 0) {
                 results.push({notePath: candidatePath, score: totalScore});
             }

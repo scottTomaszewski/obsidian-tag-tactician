@@ -10,6 +10,10 @@ export interface TagTacticianSettings {
     defaultShowScore: boolean;
     // Minimum score to show in Related Notes
     minimumRelatedNotesScore: number;
+    weightTagSimilarity: number;
+    weightTitleSimilarity: number;
+    weightPathSimilarity: number;
+    weightLinkInterconnections: number;
 }
 
 export const DEFAULT_SETTINGS: TagTacticianSettings = {
@@ -18,4 +22,8 @@ export const DEFAULT_SETTINGS: TagTacticianSettings = {
     defaultShowTags: true,
     defaultShowScore: true,
     minimumRelatedNotesScore: 1,
+    weightTagSimilarity: 1.0,
+    weightTitleSimilarity: 1.0,
+    weightPathSimilarity: 1.0,
+    weightLinkInterconnections: 1.0,
 };
