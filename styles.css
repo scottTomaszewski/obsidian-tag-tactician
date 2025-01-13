@@ -114,6 +114,7 @@
     }
 
     .related-note-item {
+        font-size: var(--font-smaller);
         display: flex;
         align-items: flex-start;
         padding: 0.5rem;
@@ -144,8 +145,7 @@
     }
 
     .related-note-tags {
-        font-size: 90%;
-
+        font-size: var(--font-smallest);
         display: inline-flex;
         flex-wrap: wrap;
 
