@@ -7,8 +7,8 @@ import {
     MarkdownView,
 } from "obsidian";
 
-import {EditTagsModal} from "./src/io/EditTagsModal";
-import {applyTagUpdates} from "./src/io/FileTagProcessor";
+import {EditTagsModal} from "./src/batch/EditTagsModal";
+import {applyTagUpdates} from "./src/batch/FileTagProcessor";
 import {TagTacticianSettingTab} from "./src/settings/TagTacticianSettingTab";
 
 import {TagTacticianSettings, DEFAULT_SETTINGS} from "./src/settings/PluginSettings";
