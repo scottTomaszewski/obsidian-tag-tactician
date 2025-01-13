@@ -169,6 +169,26 @@
     line-height: var(--line-height-tight);
     overflow-y: auto;
 
+    .tag-navigation-header {
+        margin-bottom: 0.5rem;
+    }
+
+    .tag-navigation-title-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .tag-navigation-controls {
+        display: inline-flex;
+        align-items: center;
+        justify-content: flex-end;
+    }
+
+    .tag-nav-filter-input {
+        width: 100%;
+    }
+
     /* Collapsible group styling */
     .tag-group .tag-group {
         overflow: hidden;
