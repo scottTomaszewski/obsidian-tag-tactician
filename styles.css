@@ -206,9 +206,19 @@
         border-radius: 0.25rem;
     }
 
+    /* Nested tag dirs will have a left border */
+    .tag-group .tag-group .tag-group-header:hover {
+        border-radius: 0 0.25rem 0.25rem 0;
+    }
+
+    .tag-group > details,
+    .tag-group > .tag-group-list {
+        border-left: 1px solid var(--background-modifier-border);
+    }
+
     /* Count of notes in a group */
     .tag-group-count {
-        position: fixed;
+        position: absolute;
         right: 1rem;
         color: var(--text-faint);
     }
@@ -218,8 +228,8 @@
         /*list-style: none;*/
         margin: 0;
         margin-left: 1rem;
-        padding-left: 1rem;
-        border-left: 1px solid var(--background-modifier-border);
+        padding-left: 0rem;
+        /*border-left: 1px solid var(--background-modifier-border);*/
     }
 
     .tag-group-note {
@@ -233,21 +243,21 @@
     }
 
     .tag-group-note a {
-        color: var(--nav-item-color);
+        color: var(--nav-item-color-active);
         text-decoration: none;
         font-weight: 500;
         transition: color 0.2s, text-decoration 0.2s;
         width: 100%;
-        padding: 0.25rem 0.5rem;
+        padding: 0.25rem 1.75rem;
         text-overflow: ellipsis;
         overflow: hidden;
         white-space: nowrap;
     }
 
     .tag-group-note a:hover {
-        color: var(--text-highlight-hover);
+        color: var(--nav-item-color-highlighted);
         background-color: var(--background-modifier-hover);
-        border-radius: 0.25rem;
+        border-radius: 0 0.25rem 0.25rem 0;
     }
 
     /* Highlight filter matches */
@@ -265,8 +275,6 @@
         color: var(--text-warning);
         font-style: italic;
     }
-
-
 }
 
 /* The "File Selection" setting row (for Select All buttons) */
