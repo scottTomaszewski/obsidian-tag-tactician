@@ -160,6 +160,94 @@
     }
 }
 
+/* Container styling */
+.tag-navigation-container {
+    padding: 0.5rem;
+    font-size: var(--font-small);
+    line-height: 1.5;
+    color: var(--text-normal);
+
+    /* Collapsible group styling */
+    .tag-group .tag-group {
+        overflow: hidden;
+        margin-left: 1rem;
+        /* TODO - come back to ellipsis this */
+    }
+
+    .tag-group-header {
+        padding: 0.125rem 0.5rem;
+        cursor: pointer;
+    }
+
+    /*This is the chevron*/
+    .tag-group-header::marker {
+        color: var(--text-faint);
+        font-size: var(--font-smaller);
+    }
+
+    .tag-group-header:hover {
+        background-color: var(--background-modifier-hover);
+        border-radius: 0.25rem;
+    }
+
+    /* Count of notes in a group */
+    .tag-group-count {
+        float: right;
+        color: var(--text-faint);
+    }
+
+    /* Notes list under each tag */
+    .tag-group-list {
+        /*list-style: none;*/
+        margin: 0;
+        padding: 0 1rem;
+        border-top: 1px solid var(--background-modifier-border);
+    }
+
+    /* Individual note styling */
+    .tag-group-note {
+        margin: 0;
+        padding: 0.2rem 0;
+    }
+
+    .tag-group-note a {
+        color: var(--text-accent);
+        text-decoration: none;
+        font-weight: 500;
+        transition: color 0.2s, text-decoration 0.2s;
+    }
+
+    .tag-group-note a:hover {
+        text-decoration: underline;
+        color: var(--text-highlight-hover);
+    }
+
+    /* Highlight filter matches */
+    .related-note-link .highlight {
+        background-color: var(--background-modifier-hover);
+        color: var(--text-accent-hover);
+        font-weight: bold;
+    }
+
+    /* Untagged group */
+    .tag-group[open] {
+        margin-bottom: 0.5rem;
+    }
+
+    /* Tag-based navigation "untagged" special group */
+    .tag-navigation-container .tag-group:first-of-type .tag-group-header {
+        color: var(--text-warning);
+        font-style: italic;
+    }
+
+    /* Customize spacing and alignment */
+    .tag-group-list .tag-group-note {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+}
+
 /* The "File Selection" setting row (for Select All buttons) */
 .setting-item[data-setting="File Selection"] {
     margin-top: 1rem;

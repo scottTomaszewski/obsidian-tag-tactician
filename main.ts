@@ -14,6 +14,7 @@ import {TagTacticianSettingTab} from "./src/settings/TagTacticianSettingTab";
 import {TagTacticianSettings, DEFAULT_SETTINGS} from "./src/settings/PluginSettings";
 import {TagIndexer} from "./src/relatedView/TagIndexer";
 import {RelatedNotesView, RELATED_NOTES_VIEW_TYPE} from "./src/relatedView/RelatedNotesView";
+import {NavByTagView, TAG_NAVIGATION_VIEW_TYPE} from "./src/navByTag/NavByTagView";
 
 export default class TagTacticianPlugin extends Plugin {
     settings: TagTacticianSettings;
@@ -39,6 +40,8 @@ export default class TagTacticianPlugin extends Plugin {
                 this.addTagMenuItem(menu, files);
             })
         );
+
+        this.setupNavByTag();
 
         // Initialize the TagIndexer (for "Related Notes")
         this.tagIndexer = new TagIndexer(this);
@@ -90,6 +93,7 @@ export default class TagTacticianPlugin extends Plugin {
     onunload() {
         console.log("Unloading Tag Tactician plugin...");
         this.app.workspace.detachLeavesOfType(RELATED_NOTES_VIEW_TYPE);
+        this.app.workspace.detachLeavesOfType(TAG_NAVIGATION_VIEW_TYPE);
     }
 
     private addTagMenuItem(menu: Menu, selection: TAbstractFile[]) {
@@ -150,6 +154,31 @@ export default class TagTacticianPlugin extends Plugin {
         if (!this.activeFilePath) return [];
 
         return this.tagIndexer.computeRelatedNotes(this.activeFilePath);
+    }
+
+    // --------------------------------
+    // Nav By Tag
+    // --------------------------------
+    private setupNavByTag() {
+        this.registerView(
+            TAG_NAVIGATION_VIEW_TYPE,
+            (leaf) => new NavByTagView(leaf, this.app)
+        );
+        // Add a command to open the tag-based file navigation view
+        this.addCommand({
+            id: "open-tag-navigation-view",
+            name: "Open Tag-Based File Navigation",
+            callback: () => this.activateTagNavigationView(),
+        });
+    }
+
+    async activateTagNavigationView() {
+        let leaf = this.app.workspace.getLeavesOfType(TAG_NAVIGATION_VIEW_TYPE).first();
+        if (!leaf) {
+            leaf = this.app.workspace.getRightLeaf(false);
+            await leaf.setViewState({ type: TAG_NAVIGATION_VIEW_TYPE });
+        }
+        this.app.workspace.revealLeaf(leaf);
     }
 }
 
