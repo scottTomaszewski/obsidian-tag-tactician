@@ -1,4 +1,4 @@
-import { ItemView, WorkspaceLeaf, TFile, setIcon } from "obsidian";
+import {ItemView, WorkspaceLeaf, TFile, setIcon, IconName} from "obsidian";
 import TagTacticianPlugin from "../../main";
 import { gatherTagsFromCache } from "../relatedView/TagIndexer";
 
@@ -26,8 +26,8 @@ export class NavByTagView extends ItemView {
         return "Tag Navigation";
     }
 
-    getIcon(): string {
-        return "stacked-bars";
+    getIcon(): IconName {
+        return "folder-tree";
     }
 
     async onOpen() {
@@ -45,7 +45,7 @@ export class NavByTagView extends ItemView {
         container.empty();
 
         const header = container.createEl("div", { cls: "tag-navigation-header" });
-        header.createEl("h2", { text: "Tag Navigation" });
+        header.createEl("h4", { text: "Tag Navigation" });
 
         const listContainer = container.createEl("div", { cls: "tag-navigation-list-container" });
 
@@ -100,35 +100,61 @@ export class NavByTagView extends ItemView {
 
     /**
      * Render the tag hierarchy recursively.
+     * If a tag group has only one child and no files, it will collapse into a single path.
      */
-    private renderTagGroup(container: HTMLElement, group: TagHierarchy, path: string[] = [], level: number = 0) {
+    private renderTagGroup(
+        container: HTMLElement,
+        group: TagHierarchy,
+        path: string[] = []
+    ) {
         for (const [key, { files, children }] of Object.entries(group)) {
+            const currentPath = [...path, key];
+
+            // Check if this group should be collapsed
+            const shouldCollapse =
+                Object.keys(children).length === 1 && files.size === 0;
+
+            if (shouldCollapse) {
+                const [nextKey, nextValue] = Object.entries(children)[0];
+                this.renderTagGroup(container, { [`${key}/${nextKey}`]: nextValue }, path);
+                continue;
+            }
+
             // Create a collapsible group for this tag
             const groupContainer = container.createEl("details", { cls: "tag-group" });
             const groupHeader = groupContainer.createEl("summary", { cls: "tag-group-header" });
-            groupHeader.createEl("span", { text: key });
-            groupHeader.createEl("span", {
-                cls: "tag-group-count",
-                text: `(${files.size})`
+
+            // Add icon. name, and count
+            const icon = groupHeader.createEl("span", { cls: "tag-group-icon" });
+            setIcon(icon, groupContainer.hasAttribute("open") ? "chevron-down" : "chevron-right");
+            groupContainer.addEventListener("toggle", () => {
+                setIcon(icon, groupContainer.open ? "chevron-down" : "chevron-right");
             });
+            groupHeader.createEl("span", { text: key });
+            if (files.size > 0) {
+                groupHeader.createEl("span", {
+                    cls: "tag-group-count",
+                    text: `${files.size}`
+                });
+            }
+
+            // Recursively render child tags
+            this.renderTagGroup(groupContainer, children, currentPath);
 
             // Render files under this tag
             const list = groupContainer.createEl("ul", { cls: "tag-group-list" });
             files.forEach((file) => {
                 const listItem = list.createEl("li", { cls: "tag-group-note" });
                 const link = listItem.createEl("a", {
-                    text: file.basename,
                     cls: "internal-link",
                     href: `#${file.path}`
                 });
+                link.createEl("span", { text: file.basename });
                 link.onclick = (evt) => {
                     evt.preventDefault();
                     this.app.workspace.getLeaf().openFile(file);
                 };
             });
-
-            // Recursively render child tags
-            this.renderTagGroup(groupContainer, children, [...path, key], level++);
         }
     }
 }

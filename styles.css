@@ -163,9 +163,11 @@
 /* Container styling */
 .tag-navigation-container {
     padding: 0.5rem;
-    font-size: var(--font-small);
-    line-height: 1.5;
-    color: var(--text-normal);
+    color: var(--nav-item-color);
+    font-size: var(--nav-item-size);
+    font-weight: var(--nav-item-weight);
+    line-height: var(--line-height-tight);
+    overflow-y: auto;
 
     /* Collapsible group styling */
     .tag-group .tag-group {
@@ -175,14 +177,28 @@
     }
 
     .tag-group-header {
-        padding: 0.125rem 0.5rem;
+        padding: 0.25rem 0.5rem;
         cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        width: 100%;
     }
 
     /*This is the chevron*/
-    .tag-group-header::marker {
+    /*.tag-group-header::marker {*/
+    /*    color: var(--text-faint);*/
+    /*    content: " "*/
+    /*}*/
+
+    .tag-group-icon {
+        display: flex;
         color: var(--text-faint);
-        font-size: var(--font-smaller);
+        margin-right: 0.25rem;
+    }
+
+    .tag-group-icon svg.svg-icon {
+        height: 16px;
+        width: 16px;
     }
 
     .tag-group-header:hover {
@@ -192,7 +208,8 @@
 
     /* Count of notes in a group */
     .tag-group-count {
-        float: right;
+        position: fixed;
+        right: 1rem;
         color: var(--text-faint);
     }
 
@@ -200,26 +217,37 @@
     .tag-group-list {
         /*list-style: none;*/
         margin: 0;
-        padding: 0 1rem;
-        border-top: 1px solid var(--background-modifier-border);
+        margin-left: 1rem;
+        padding-left: 1rem;
+        border-left: 1px solid var(--background-modifier-border);
     }
 
-    /* Individual note styling */
     .tag-group-note {
         margin: 0;
-        padding: 0.2rem 0;
+    }
+
+    .tag-group-list .tag-group-note {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
     }
 
     .tag-group-note a {
-        color: var(--text-accent);
+        color: var(--nav-item-color);
         text-decoration: none;
         font-weight: 500;
         transition: color 0.2s, text-decoration 0.2s;
+        width: 100%;
+        padding: 0.25rem 0.5rem;
+        text-overflow: ellipsis;
+        overflow: hidden;
+        white-space: nowrap;
     }
 
     .tag-group-note a:hover {
-        text-decoration: underline;
         color: var(--text-highlight-hover);
+        background-color: var(--background-modifier-hover);
+        border-radius: 0.25rem;
     }
 
     /* Highlight filter matches */
@@ -229,9 +257,7 @@
         font-weight: bold;
     }
 
-    /* Untagged group */
     .tag-group[open] {
-        margin-bottom: 0.5rem;
     }
 
     /* Tag-based navigation "untagged" special group */
@@ -240,12 +266,7 @@
         font-style: italic;
     }
 
-    /* Customize spacing and alignment */
-    .tag-group-list .tag-group-note {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-    }
+
 }
 
 /* The "File Selection" setting row (for Select All buttons) */
