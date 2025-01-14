@@ -15,10 +15,13 @@ export class TagTacticianSettingTab extends PluginSettingTab {
 
         containerEl.createEl("h1", { text: "Tag Tactician Settings" });
 
+        // ==================
+        // Batch
+        // ==================
         containerEl.createEl("h3", { text: "Bulk Operation Settings" });
 
         new Setting(containerEl)
-            .setName("Show Warning for Non-Markdown Files")
+            .setName("Show warning for non-markdown files")
             .setDesc("If enabled, the modal will display a warning for non-Markdown files.")
             .addToggle((toggle) =>
                 toggle
@@ -30,7 +33,7 @@ export class TagTacticianSettingTab extends PluginSettingTab {
             );
 
         new Setting(containerEl)
-            .setName("Tag List Style")
+            .setName("Tag list style")
             .setDesc("Choose how frontmatter tags are serialized: hyphen block style or bracket inline style.")
             .addDropdown((dropdown) => {
                 dropdown
@@ -43,12 +46,15 @@ export class TagTacticianSettingTab extends PluginSettingTab {
                     });
             });
 
+        // ==================
+        // Related Notes
+        // ==================
         containerEl.createEl("br");
         containerEl.createEl("br");
         containerEl.createEl("h3", { text: "Related Notes View Settings" });
 
         new Setting(containerEl)
-            .setName("Show Tags by Default")
+            .setName("Show tags by default")
             .setDesc("If enabled, the Related Notes sidebar will initially show tags.")
             .addToggle((toggle) => {
                 toggle
@@ -60,7 +66,7 @@ export class TagTacticianSettingTab extends PluginSettingTab {
             });
 
         new Setting(containerEl)
-            .setName("Show Score by Default")
+            .setName("Show score by default")
             .setDesc("If enabled, the Related Notes sidebar will initially show note scores.")
             .addToggle((toggle) => {
                 toggle
@@ -88,7 +94,7 @@ export class TagTacticianSettingTab extends PluginSettingTab {
         containerEl.createEl("p", { text: "Higher values increase importance." });
 
         new Setting(containerEl)
-            .setName("Tag Similarity Weight")
+            .setName("Tag similarity weight")
             .setDesc("The weight of tag similarity in the Related Notes score.")
             .addText((text) => {
                 text
@@ -101,7 +107,7 @@ export class TagTacticianSettingTab extends PluginSettingTab {
             });
 
         new Setting(containerEl)
-            .setName("Title Similarity Weight")
+            .setName("Title similarity weight")
             .setDesc("The weight of file name similarity in the Related Notes score.")
             .addText((text) => {
                 text
@@ -114,7 +120,7 @@ export class TagTacticianSettingTab extends PluginSettingTab {
             });
 
         new Setting(containerEl)
-            .setName("Path Similarity Weight")
+            .setName("Path similarity weight")
             .setDesc("The weight of file path similarity in the Related Notes score.")
             .addText((text) => {
                 text
@@ -127,7 +133,7 @@ export class TagTacticianSettingTab extends PluginSettingTab {
             });
 
         new Setting(containerEl)
-            .setName("Link Interconnections Weight")
+            .setName("Link interconnections weight")
             .setDesc("The weight of notes having links to each other in the Related Notes score.")
             .addText((text) => {
                 text
@@ -138,5 +144,27 @@ export class TagTacticianSettingTab extends PluginSettingTab {
                         await this.plugin.saveSettings();
                     });
             });
+
+        // ==================
+        // Nav by Tag
+        // ==================
+        containerEl.createEl("br");
+        containerEl.createEl("br");
+        containerEl.createEl("h3", { text: "Tag Navigation Settings" });
+
+        new Setting(containerEl)
+            .setName("Default navigation sorting")
+            .setDesc("Sort alphabetically or by notes with the tag.")
+            .addDropdown((dropdown) => {
+                dropdown
+                    .addOption("alphabetically-descending", "Alphabetically")
+                    .addOption("file-count-descending", "By note count")
+                    .setValue(this.plugin.settings.nbtDefaultSort)
+                    .onChange(async (value) => {
+                        this.plugin.settings.nbtDefaultSort = value as "alphabetically-descending" | "file-count-descending";
+                        await this.plugin.saveSettings();
+                    });
+            });
+
     }
 }

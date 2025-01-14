@@ -162,7 +162,7 @@ export default class TagTacticianPlugin extends Plugin {
     private setupNavByTag() {
         this.registerView(
             TAG_NAVIGATION_VIEW_TYPE,
-            (leaf) => new NavByTagView(leaf, this.app)
+            (leaf) => new NavByTagView(leaf, this)
         );
         // Add a command to open the tag-based file navigation view
         this.addCommand({

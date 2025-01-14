@@ -1,9 +1,15 @@
 export type TagListStyle = "hyphens" | "brackets";
 
 export interface TagTacticianSettings {
+    // ==================
+    // Batch
+    // ==================
     showNonMarkdownWarning: boolean;
     tagListStyle: TagListStyle;
 
+    // ==================
+    // Related Notes
+    // ==================
     // Whether to show tags by default in Related Notes
     defaultShowTags: boolean;
     // Whether to show scores by default in Related Notes
@@ -14,6 +20,11 @@ export interface TagTacticianSettings {
     weightTitleSimilarity: number;
     weightPathSimilarity: number;
     weightLinkInterconnections: number;
+
+    // ==================
+    // Nav by Tags
+    // ==================
+    nbtDefaultSort: "alphabetically-descending" | "file-count-descending";
 }
 
 export const DEFAULT_SETTINGS: TagTacticianSettings = {
@@ -26,4 +37,5 @@ export const DEFAULT_SETTINGS: TagTacticianSettings = {
     weightTitleSimilarity: 1.0,
     weightPathSimilarity: 1.0,
     weightLinkInterconnections: 1.0,
+    nbtDefaultSort: "alphabetically-descending",
 };

@@ -10,8 +10,8 @@ export const TAG_NAVIGATION_VIEW_TYPE = "tag-navigation-view";
 export class NavByTagView extends ItemView {
     plugin: TagTacticianPlugin;
 
-    /** Current sort mode: "alpha" (alphabetical) or "count" (descending by total file count). */
-    private sortMode: "alpha" | "count" = "alpha";
+    /** Current sort mode */
+    private sortMode: "alphabetically-descending" | "file-count-descending";
 
     /** Current filter text for searching tags and their files. */
     private filterQuery: string = "";
@@ -25,6 +25,7 @@ export class NavByTagView extends ItemView {
     constructor(leaf: WorkspaceLeaf, plugin: TagTacticianPlugin) {
         super(leaf);
         this.plugin = plugin;
+        this.sortMode = plugin.settings.nbtDefaultSort;
     }
 
     getViewType(): string {
@@ -69,7 +70,7 @@ export class NavByTagView extends ItemView {
         const sortBtn = controls.createEl("button", { cls: "tag-nav-sort-btn clickable-icon" });
         this.updateSortButtonLabel(sortBtn);
         sortBtn.onclick = () => {
-            this.sortMode = this.sortMode === "alpha" ? "count" : "alpha";
+            this.sortMode = this.sortMode === "alphabetically-descending" ? "file-count-descending" : "alphabetically-descending";
             this.updateSortButtonLabel(sortBtn);
             this.renderList();
         };
@@ -198,7 +199,7 @@ export class NavByTagView extends ItemView {
     /**
      * Sort the hierarchy either alphabetically or by descending total file count.
      */
-    private sortHierarchy(hierarchy: TagHierarchy, mode: "alpha" | "count"): TagHierarchy {
+    private sortHierarchy(hierarchy: TagHierarchy, mode: "alphabetically-descending" | "file-count-descending"): TagHierarchy {
         const sortedEntries = Object.entries(hierarchy).map(([key, node]) => {
             return [
                 key,
@@ -209,7 +210,7 @@ export class NavByTagView extends ItemView {
             ] as const;
         });
 
-        if (mode === "alpha") {
+        if (mode === "alphabetically-descending") {
             sortedEntries.sort((a, b) =>
                 a[0].localeCompare(b[0], undefined, { sensitivity: "base" })
             );
@@ -303,7 +304,7 @@ export class NavByTagView extends ItemView {
     }
 
     private updateSortButtonLabel(buttonEl: HTMLButtonElement) {
-        if (this.sortMode === "alpha") {
+        if (this.sortMode === "alphabetically-descending") {
             setIcon(buttonEl, "arrow-down-az");
             buttonEl.title = "Sorting alphabetically";
         } else {
