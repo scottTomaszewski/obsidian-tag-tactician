@@ -310,10 +310,10 @@ export class NavByTagView extends ItemView {
     private updateSortButtonLabel(buttonEl: HTMLButtonElement) {
         if (this.sortMode === "alphabetically-descending") {
             setIcon(buttonEl, "arrow-down-az");
-            buttonEl.title = "Sorting alphabetically";
+            buttonEl.title = "Sorting alphabetically.\nClick to sort by file count";
         } else {
             setIcon(buttonEl, "arrow-down-10");
-            buttonEl.title = "Sorting by file count";
+            buttonEl.title = "Sorting by file count.\nClick to sort alphabetically";
         }
     }
 
