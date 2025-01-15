@@ -236,6 +236,7 @@ export class NavByTagView extends ItemView {
     /**
      * Render the tag hierarchy recursively.
      */
+    // TODO - add titles
     private renderTagGroup(container: HTMLElement, group: TagHierarchy, path: string[] = []) {
         for (const [key, { files, children }] of Object.entries(group)) {
             // Single-child collapsing check
@@ -261,15 +262,17 @@ export class NavByTagView extends ItemView {
             });
 
             // Tag name
-            groupHeader.createEl("span", { text: key });
+            const tagName = groupHeader.createEl("span", { text: key });
+            tagName.title = path.length !== 0 ? `${path}/${key}` : key;
 
             // Count
             const totalCount = this.getTotalFileCountForNode({ files, children });
             if (totalCount > 0) {
-                groupHeader.createEl("span", {
+                const count = groupHeader.createEl("span", {
                     cls: "tag-group-count",
                     text: `${totalCount}`,
                 });
+                count.title = `Files with this tag: ${files.size}\nFiles with subtag: ${totalCount - files.size}`;
             }
 
             // Recursively render children
@@ -279,6 +282,7 @@ export class NavByTagView extends ItemView {
             const list = groupContainer.createEl("ul", { cls: "tag-group-list" });
             for (const file of files) {
                 const listItem = list.createEl("li", { cls: "tag-group-note" });
+                listItem.title = file.path;
                 const link = listItem.createEl("a", {
                     cls: "internal-link",
                     href: `#${file.path}`,
