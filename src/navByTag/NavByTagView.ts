@@ -70,7 +70,10 @@ export class NavByTagView extends ItemView {
         const sortBtn = controls.createEl("button", { cls: "tag-nav-sort-btn clickable-icon" });
         this.updateSortButtonLabel(sortBtn);
         sortBtn.onclick = () => {
-            this.sortMode = this.sortMode === "alphabetically-descending" ? "file-count-descending" : "alphabetically-descending";
+            this.sortMode =
+                this.sortMode === "alphabetically-descending"
+                    ? "file-count-descending"
+                    : "alphabetically-descending";
             this.updateSortButtonLabel(sortBtn);
             this.renderList();
         };
@@ -199,7 +202,10 @@ export class NavByTagView extends ItemView {
     /**
      * Sort the hierarchy either alphabetically or by descending total file count.
      */
-    private sortHierarchy(hierarchy: TagHierarchy, mode: "alphabetically-descending" | "file-count-descending"): TagHierarchy {
+    private sortHierarchy(
+        hierarchy: TagHierarchy,
+        mode: "alphabetically-descending" | "file-count-descending"
+    ): TagHierarchy {
         const sortedEntries = Object.entries(hierarchy).map(([key, node]) => {
             return [
                 key,
@@ -236,7 +242,6 @@ export class NavByTagView extends ItemView {
     /**
      * Render the tag hierarchy recursively.
      */
-    // TODO - add titles
     private renderTagGroup(container: HTMLElement, group: TagHierarchy, path: string[] = []) {
         for (const [key, { files, children }] of Object.entries(group)) {
             // Single-child collapsing check
@@ -261,8 +266,11 @@ export class NavByTagView extends ItemView {
                 setIcon(icon, groupContainer.open ? "chevron-down" : "chevron-right");
             });
 
-            // Tag name
-            const tagName = groupHeader.createEl("span", { text: key });
+            // Tag name (highlight filter matches here)
+            const tagName = groupHeader.createEl("span");
+            // Insert highlighted HTML instead of plain text:
+            tagName.innerHTML = this.highlightMatches(key, this.filterQuery);
+            // Hover tip
             tagName.title = path.length !== 0 ? `${path}/${key}` : key;
 
             // Count
@@ -270,8 +278,8 @@ export class NavByTagView extends ItemView {
             if (totalCount > 0) {
                 const count = groupHeader.createEl("span", {
                     cls: "tag-group-count",
-                    text: `${totalCount}`,
                 });
+                count.innerText = `${totalCount}`;
                 count.title = `Files with this tag: ${files.size}\nFiles with subtag: ${totalCount - files.size}`;
             }
 
@@ -287,7 +295,10 @@ export class NavByTagView extends ItemView {
                     cls: "internal-link",
                     href: `#${file.path}`,
                 });
-                link.createEl("span", { text: file.basename });
+                // Insert highlighted basename
+                const nameSpan = link.createEl("span");
+                nameSpan.innerHTML = this.highlightMatches(file.basename, this.filterQuery);
+
                 link.onclick = (evt) => {
                     evt.preventDefault();
                     this.app.workspace.getLeaf().openFile(file);
@@ -305,6 +316,22 @@ export class NavByTagView extends ItemView {
             count += this.getTotalFileCountForNode(child);
         }
         return count;
+    }
+
+    /**
+     * Helper method to highlight all occurrences of `filter` within `original`,
+     * wrapping them in <span class="highlight">... </span>. (Case-insensitive)
+     */
+    private highlightMatches(original: string, filter: string): string {
+        if (!filter) return original;
+
+        // Escape regex specials in the filter text
+        const escaped = filter.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        // Build a case-insensitive regex
+        const regex = new RegExp(`(${escaped})`, "gi");
+
+        // Replace all matches with <span class="highlight">...</span>
+        return original.replace(regex, `<span class="highlight">$1</span>`);
     }
 
     private updateSortButtonLabel(buttonEl: HTMLButtonElement) {

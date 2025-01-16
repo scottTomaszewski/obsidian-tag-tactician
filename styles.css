@@ -280,11 +280,8 @@
         border-radius: 0 0.25rem 0.25rem 0;
     }
 
-    /* Highlight filter matches */
-    .related-note-link .highlight {
-        background-color: var(--background-modifier-hover);
-        color: var(--text-accent-hover);
-        font-weight: bold;
+    .highlight {
+        background-color: var(--text-highlight-bg);
     }
 
     .tag-group[open] {
