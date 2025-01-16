@@ -12,10 +12,10 @@ export class BulkFrontmatterTagSettingsTab extends PluginSettingTab {
     display(): void {
         const { containerEl } = this;
         containerEl.empty();
-        containerEl.createEl("h2", { text: "Bulk Frontmatter Tag Manager Settings" });
+        containerEl.createEl("h2", { text: "Bulk frontmatter tag manager settings" });
 
         new Setting(containerEl)
-            .setName("Show Warning for Non-Markdown Files")
+            .setName("Show warning for non-markdown files")
             .setDesc("If enabled, the modal will display a warning for non-Markdown files.")
             .addToggle((toggle) =>
                 toggle
@@ -27,12 +27,12 @@ export class BulkFrontmatterTagSettingsTab extends PluginSettingTab {
             );
 
         new Setting(containerEl)
-            .setName("Tag List Style")
+            .setName("Tag list style")
             .setDesc("Choose how frontmatter tags are serialized: hyphen block style or bracket inline style.")
             .addDropdown((dropdown) => {
                 dropdown
-                    .addOption("hyphens", "Hyphens (Block Style)")
-                    .addOption("brackets", "Square Brackets (Inline Style)")
+                    .addOption("hyphens", "Hyphens (block style)")
+                    .addOption("brackets", "Square brackets (inline style)")
 
                     // Current value from plugin settings
                     .setValue(this.plugin.settings.tagListStyle)

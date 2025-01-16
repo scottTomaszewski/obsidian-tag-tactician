@@ -73,7 +73,7 @@ export class EditTagsModal extends Modal {
         const {contentEl} = this;
         this.modalEl.addClass("tt-bulk-tag-modal");
         contentEl.empty();
-        contentEl.createEl("h2", {text: "Bulk Edit Frontmatter Tags"});
+        contentEl.createEl("h2", {text: "Bulk edit frontmatter tags"});
 
         // 1) Warn user about non-markdown files
         if (this.nonMarkdownFiles.length > 0) {
@@ -105,7 +105,7 @@ export class EditTagsModal extends Modal {
 
         // 3) Render the top input fields for "tags to add" / "tags to remove"
         new Setting(contentEl)
-            .setName("Tags to Add (comma or space separated)")
+            .setName("Tags to add (comma or space separated)")
             .addText((text) => {
                 text.setPlaceholder("foo, bar/1");
                 text.onChange((val) => {
@@ -115,7 +115,7 @@ export class EditTagsModal extends Modal {
             });
 
         new Setting(contentEl)
-            .setName("Tags to Remove (comma or space separated)")
+            .setName("Tags to remove (comma or space separated)")
             .addText((text) => {
                 text.setPlaceholder("bar/2, oldTag");
                 text.onChange((val) => {
@@ -126,11 +126,11 @@ export class EditTagsModal extends Modal {
 
         // 4) Add "Select All" / "Deselect All" buttons
         new Setting(contentEl)
-            .setName("File Selection")
+            .setName("File selection")
             .setDesc("Check or uncheck all files at once.")
             .addButton((btn) =>
                 btn
-                    .setButtonText("Select All")
+                    .setButtonText("Select all")
                     .onClick(() => {
                         for (const tagData of this.fileTagData) {
                             tagData.accepted = true;
@@ -142,7 +142,7 @@ export class EditTagsModal extends Modal {
             )
             .addButton((btn) =>
                 btn
-                    .setButtonText("Deselect All")
+                    .setButtonText("Deselect all")
                     .onClick(() => {
                         for (const tagData of this.fileTagData) {
                             tagData.accepted = false;
@@ -164,15 +164,15 @@ export class EditTagsModal extends Modal {
         });
         headerRow.createEl("span", {cls: "cb-col"});
         headerRow.createEl("span", {
-            text: "File Name",
+            text: "File name",
             cls: "file-name-col header-col",
         });
         headerRow.createEl("span", {
-            text: "Current Tags",
+            text: "Current tags",
             cls: "current-tags-col header-col",
         });
         headerRow.createEl("span", {
-            text: "Proposed Tags",
+            text: "Proposed tags",
             cls: "proposed-tags-col header-col",
         });
 
@@ -185,7 +185,7 @@ export class EditTagsModal extends Modal {
         new Setting(contentEl)
             .addButton((btn) =>
                 btn
-                    .setButtonText("Apply Changes")
+                    .setButtonText("Apply changes")
                     .setCta()
                     .onClick(() => {
                         // Gather the final set of files that are accepted
