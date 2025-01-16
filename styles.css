@@ -163,10 +163,6 @@
 /* Container styling */
 .tag-navigation-container {
     padding: 0.5rem;
-    color: var(--nav-item-color);
-    font-size: var(--nav-item-size);
-    font-weight: var(--nav-item-weight);
-    line-height: var(--line-height-tight);
     overflow-y: auto;
 
     .tag-navigation-header {
@@ -187,6 +183,13 @@
 
     .tag-nav-filter-input {
         width: 100%;
+    }
+
+    .tag-navigation-list-container {
+        color: var(--nav-item-color);
+        font-size: var(--nav-item-size);
+        font-weight: var(--nav-item-weight);
+        line-height: var(--line-height-tight);
     }
 
     /* Collapsible group styling */

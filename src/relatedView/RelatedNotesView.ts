@@ -63,7 +63,7 @@ export class RelatedNotesView extends ItemView {
         // Title row (with "Options" gear icon)
         const header = container.createEl("div", { cls: "related-notes-header" });
         const titleRow = header.createEl("div", { cls: "related-notes-title-row" });
-        titleRow.createEl("h2", { text: "Related Notes" });
+        titleRow.createEl("h4", { text: "Related Notes" });
 
         // Single "Options" button that opens a menu
         const optionsBtn = titleRow.createEl("button", { cls: "clickable-icon" });
