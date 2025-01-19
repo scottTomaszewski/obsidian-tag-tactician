@@ -1,4 +1,4 @@
-import { App, TFile } from "obsidian";
+import {App, getFrontMatterInfo, parseYaml, TFile} from "obsidian";
 import * as yaml from "js-yaml";
 
 // Regex that only matches the first frontmatter block at the top of the file.
@@ -33,40 +33,34 @@ export async function applyTagUpdates(
         // Only modify .md files
         if (file.extension !== "md") continue;
 
+        // NOTES FROM CODE REVIEW:
+        // Prefer Vault.process instead of Vault.modify to modify a file in the background.
+        // Normally I'd recommend using FileManager.processFrontMatter since you are only updating frontmatter,
+        // but that doesn't support bracket syntax for lists in YAML.
+        // Just keep in mind that Obsidian may override the format if the user interacts with the frontmatter using
+        // the properties UI or if another plugin is using FileManager.processFrontMatter
+        //
+        // I plan on keeping it this way for now to support the bracket syntax for lists in YAML (which is what I
+        // personally prefer).  I will keep an eye out if this becomes an issue.
         const content = await app.vault.read(file);
         let newContent: string | undefined;
 
-        // Check if frontmatter already exists
-        const fmMatch = content.match(FRONTMATTER_REGEX);
-        if (!fmMatch) {
+        const frontMatterInfo = getFrontMatterInfo(content);
+        if (frontMatterInfo.exists) {
+            // Frontmatter exists => update the tags field
+            const fmData = parseYaml(frontMatterInfo.frontmatter);
+            fmData.tags = finalTags.length > 0 ? finalTags : undefined;
+            const newYaml = dumpYaml(fmData, settings.tagListStyle);
+            newContent = content.slice(0, frontMatterInfo.from) + `${newYaml}\n` + content.slice(frontMatterInfo.to);
+        } else {
             // No frontmatter => create one only if finalTags is non-empty
             if (finalTags.length === 0) {
                 // Nothing to do
                 continue;
             }
-            // Create minimal frontmatter
             const fmData = { tags: finalTags.length > 0 ? finalTags : undefined };
             const newYaml = dumpYaml(fmData, settings.tagListStyle);
             newContent = `---\n${newYaml}\n---\n${content}`;
-        } else {
-            // Frontmatter exists => parse & update
-            const yamlBody = fmMatch[1];
-            let fmData: any;
-            try {
-                fmData = yaml.load(yamlBody) || {};
-            } catch (err) {
-                console.error(`Failed to parse YAML in ${file.path}`, err);
-                continue;
-            }
-            // Update `tags` field based on finalTags
-            fmData.tags = finalTags.length > 0 ? finalTags : undefined;
-
-            // Re-stringify
-            const newYaml = dumpYaml(fmData, settings.tagListStyle);
-            newContent = content.replace(
-                FRONTMATTER_REGEX,
-                `---\n${newYaml}\n---`
-            );
         }
 
         // If content actually changed, write it

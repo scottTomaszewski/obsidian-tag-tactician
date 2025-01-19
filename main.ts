@@ -5,7 +5,7 @@ import {
     Plugin,
     TAbstractFile,
     TFile,
-    TFolder
+    TFolder, Vault
 } from "obsidian";
 import * as yaml from "js-yaml";
 import {EditTagsModal} from "./src/io/EditTagsModal";
@@ -24,13 +24,10 @@ export const DEFAULT_SETTINGS: BulkFrontmatterTagSettings = {
     tagListStyle: "hyphens", // could be "hyphens" or "brackets" by default
 };
 
-const FRONTMATTER_REGEX = /^(?:\uFEFF)?---\r?\n([\s\S]*?)\r?\n---/;
-
 export default class BulkFrontmatterTagManager extends Plugin {
     settings: BulkFrontmatterTagSettings;
 
     async onload() {
-        console.log("Loading Bulk Frontmatter Tag Manager plugin...");
         await this.loadSettings();
 
         // --------------------------------------------------------------------
@@ -64,7 +61,6 @@ export default class BulkFrontmatterTagManager extends Plugin {
     }
 
     onunload() {
-        console.log("Unloading Bulk Frontmatter Tag Manager plugin...");
     }
 
     // --------------------------------------------------------------------
@@ -74,7 +70,7 @@ export default class BulkFrontmatterTagManager extends Plugin {
     private addTagMenuItem(menu: Menu, selection: TAbstractFile[]) {
         menu.addItem((item) => {
             item
-                .setTitle("Edit Tags (Frontmatter)")
+                .setTitle("Edit tags (frontmatter)")
                 .setIcon("hashtag")
                 .onClick(async () => {
                     // Expand any folders in the selection into all .md files
@@ -109,34 +105,21 @@ export default class BulkFrontmatterTagManager extends Plugin {
     }
 }
 
-/**
- * Recursively expand any selected folders into all their files (including nested folders),
- * while leaving non-folder items as-is.
- */
 function expandFolders(selection: TAbstractFile[]): TAbstractFile[] {
     const results: TAbstractFile[] = [];
 
     for (const item of selection) {
         if (item instanceof TFolder) {
-            gatherFolderContents(item, results);
+            Vault.recurseChildren(item, (child) => {
+                if (child instanceof TFile) {
+                    results.push(child);
+                }
+            });
         } else {
-            // TFile or something else—just add directly
+            // If it's not a folder, just add it as-is
             results.push(item);
         }
     }
 
     return results;
-}
-
-/**
- * Recursively collect all children of the given folder into `accumulator`.
- */
-function gatherFolderContents(folder: TFolder, accumulator: TAbstractFile[]) {
-    for (const child of folder.children) {
-        if (child instanceof TFolder) {
-            gatherFolderContents(child, accumulator);
-        } else {
-            accumulator.push(child);
-        }
-    }
 }

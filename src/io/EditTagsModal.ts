@@ -4,11 +4,9 @@ import {
     TFile,
     TAbstractFile,
     Modal,
-    Notice,
+    Notice, parseFrontMatterTags,
 } from "obsidian";
 import * as yaml from "js-yaml";
-
-const FRONTMATTER_REGEX = /^(?:\uFEFF)?---\r?\n([\s\S]*?)\r?\n---/;
 
 /**
  * Basic data about a file’s tags (current & proposed).
@@ -220,30 +218,14 @@ export class EditTagsModal extends Modal {
         this.invalidYamlFiles = [];
 
         for (const file of this.mdFiles) {
-            const content = await this.app.vault.read(file);
+            const frontmatter = this.app.metadataCache.getFileCache(file).frontmatter;
+            let currentTags = parseFrontMatterTags(frontmatter);
+            currentTags = currentTags === null ? currentTags = [] : currentTags;
 
-            const fmMatch = content.match(FRONTMATTER_REGEX);
-            let currentTags: string[] = [];
-            let skipFile = false;
+            // remove leading #
+            currentTags = currentTags.map((t) => t.startsWith("#") ? t.slice(1) : t);
 
-            if (fmMatch) {
-                const yamlBody = fmMatch[1];
-                try {
-                    const fmData: any = yaml.load(yamlBody) || {};
-                    currentTags = normalizeTags(fmData.tags);
-                } catch (err) {
-                    console.error(`Failed to parse YAML in ${file.path}`, err);
-                    this.invalidYamlFiles.push(file);
-                    skipFile = true;
-                }
-            }
-
-            if (skipFile) continue;
-
-            // If there's no frontmatter, treat it as having no tags,
-            // but we won't skip it so the user can add tags from scratch.
             const proposedTags = [...currentTags].sort();
-
             this.fileTagData.push({
                 file,
                 currentTags,

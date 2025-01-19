@@ -12,11 +12,10 @@ export class BulkFrontmatterTagSettingsTab extends PluginSettingTab {
     display(): void {
         const { containerEl } = this;
         containerEl.empty();
-        containerEl.createEl("h2", { text: "Bulk frontmatter tag manager settings" });
 
         new Setting(containerEl)
             .setName("Show warning for non-markdown files")
-            .setDesc("If enabled, the modal will display a warning for non-Markdown files.")
+            .setDesc("If enabled, the modal will display a warning for non-markdown files.")
             .addToggle((toggle) =>
                 toggle
                     .setValue(this.plugin.settings.showNonMarkdownWarning)
