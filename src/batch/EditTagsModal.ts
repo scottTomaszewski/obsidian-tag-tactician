@@ -4,11 +4,9 @@ import {
     TFile,
     TAbstractFile,
     Modal,
-    Notice,
+    Notice, parseFrontMatterTags,
 } from "obsidian";
 import * as yaml from "js-yaml";
-
-const FRONTMATTER_REGEX = /^(?:\uFEFF)?---\r?\n([\s\S]*?)\r?\n---/;
 
 /**
  * Basic data about a file’s tags (current & proposed).
@@ -73,7 +71,7 @@ export class EditTagsModal extends Modal {
         const {contentEl} = this;
         this.modalEl.addClass("tt-bulk-tag-modal");
         contentEl.empty();
-        contentEl.createEl("h2", {text: "Bulk Edit Frontmatter Tags"});
+        contentEl.createEl("h2", {text: "Bulk edit frontmatter tags"});
 
         // 1) Warn user about non-markdown files
         if (this.nonMarkdownFiles.length > 0) {
@@ -105,7 +103,7 @@ export class EditTagsModal extends Modal {
 
         // 3) Render the top input fields for "tags to add" / "tags to remove"
         new Setting(contentEl)
-            .setName("Tags to Add (comma or space separated)")
+            .setName("Tags to add (comma or space separated)")
             .addText((text) => {
                 text.setPlaceholder("foo, bar/1");
                 text.onChange((val) => {
@@ -115,7 +113,7 @@ export class EditTagsModal extends Modal {
             });
 
         new Setting(contentEl)
-            .setName("Tags to Remove (comma or space separated)")
+            .setName("Tags to remove (comma or space separated)")
             .addText((text) => {
                 text.setPlaceholder("bar/2, oldTag");
                 text.onChange((val) => {
@@ -126,11 +124,11 @@ export class EditTagsModal extends Modal {
 
         // 4) Add "Select All" / "Deselect All" buttons
         new Setting(contentEl)
-            .setName("File Selection")
+            .setName("File selection")
             .setDesc("Check or uncheck all files at once.")
             .addButton((btn) =>
                 btn
-                    .setButtonText("Select All")
+                    .setButtonText("Select all")
                     .onClick(() => {
                         for (const tagData of this.fileTagData) {
                             tagData.accepted = true;
@@ -142,7 +140,7 @@ export class EditTagsModal extends Modal {
             )
             .addButton((btn) =>
                 btn
-                    .setButtonText("Deselect All")
+                    .setButtonText("Deselect all")
                     .onClick(() => {
                         for (const tagData of this.fileTagData) {
                             tagData.accepted = false;
@@ -164,15 +162,15 @@ export class EditTagsModal extends Modal {
         });
         headerRow.createEl("span", {cls: "cb-col"});
         headerRow.createEl("span", {
-            text: "File Name",
+            text: "File name",
             cls: "file-name-col header-col",
         });
         headerRow.createEl("span", {
-            text: "Current Tags",
+            text: "Current tags",
             cls: "current-tags-col header-col",
         });
         headerRow.createEl("span", {
-            text: "Proposed Tags",
+            text: "Proposed tags",
             cls: "proposed-tags-col header-col",
         });
 
@@ -185,7 +183,7 @@ export class EditTagsModal extends Modal {
         new Setting(contentEl)
             .addButton((btn) =>
                 btn
-                    .setButtonText("Apply Changes")
+                    .setButtonText("Apply changes")
                     .setCta()
                     .onClick(() => {
                         // Gather the final set of files that are accepted
@@ -220,30 +218,14 @@ export class EditTagsModal extends Modal {
         this.invalidYamlFiles = [];
 
         for (const file of this.mdFiles) {
-            const content = await this.app.vault.read(file);
+            const frontmatter = this.app.metadataCache.getFileCache(file).frontmatter;
+            let currentTags = parseFrontMatterTags(frontmatter);
+            currentTags = currentTags === null ? currentTags = [] : currentTags;
 
-            const fmMatch = content.match(FRONTMATTER_REGEX);
-            let currentTags: string[] = [];
-            let skipFile = false;
+            // remove leading #
+            currentTags = currentTags.map((t) => t.startsWith("#") ? t.slice(1) : t);
 
-            if (fmMatch) {
-                const yamlBody = fmMatch[1];
-                try {
-                    const fmData: any = yaml.load(yamlBody) || {};
-                    currentTags = normalizeTags(fmData.tags);
-                } catch (err) {
-                    console.error(`Failed to parse YAML in ${file.path}`, err);
-                    this.invalidYamlFiles.push(file);
-                    skipFile = true;
-                }
-            }
-
-            if (skipFile) continue;
-
-            // If there's no frontmatter, treat it as having no tags,
-            // but we won't skip it so the user can add tags from scratch.
             const proposedTags = [...currentTags].sort();
-
             this.fileTagData.push({
                 file,
                 currentTags,

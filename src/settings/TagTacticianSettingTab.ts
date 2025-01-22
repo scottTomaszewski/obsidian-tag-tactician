@@ -13,16 +13,14 @@ export class TagTacticianSettingTab extends PluginSettingTab {
         const { containerEl } = this;
         containerEl.empty();
 
-        containerEl.createEl("h1", { text: "Tag Tactician Settings" });
-
         // ==================
         // Batch
         // ==================
-        containerEl.createEl("h3", { text: "Bulk Operation Settings" });
+        new Setting(containerEl).setName('Bulk tag operations').setHeading();
 
         new Setting(containerEl)
             .setName("Show warning for non-markdown files")
-            .setDesc("If enabled, the modal will display a warning for non-Markdown files.")
+            .setDesc("If enabled, the modal will display a warning for non-markdown files.")
             .addToggle((toggle) =>
                 toggle
                     .setValue(this.plugin.settings.showNonMarkdownWarning)
@@ -37,9 +35,13 @@ export class TagTacticianSettingTab extends PluginSettingTab {
             .setDesc("Choose how frontmatter tags are serialized: hyphen block style or bracket inline style.")
             .addDropdown((dropdown) => {
                 dropdown
-                    .addOption("hyphens", "Hyphens (Block Style)")
-                    .addOption("brackets", "Square Brackets (Inline Style)")
+                    .addOption("hyphens", "Hyphens (block style)")
+                    .addOption("brackets", "Square brackets (inline style)")
+
+                    // Current value from plugin settings
                     .setValue(this.plugin.settings.tagListStyle)
+
+                    // Save the user’s selection
                     .onChange(async (value) => {
                         this.plugin.settings.tagListStyle = value as "hyphens" | "brackets";
                         await this.plugin.saveSettings();
@@ -49,9 +51,7 @@ export class TagTacticianSettingTab extends PluginSettingTab {
         // ==================
         // Related Notes
         // ==================
-        containerEl.createEl("br");
-        containerEl.createEl("br");
-        containerEl.createEl("h3", { text: "Related Notes View Settings" });
+        new Setting(containerEl).setName('Related notes view').setHeading();
 
         new Setting(containerEl)
             .setName("Show tags by default")
@@ -90,7 +90,7 @@ export class TagTacticianSettingTab extends PluginSettingTab {
                     });
             });
 
-        containerEl.createEl("h4", { text: "Related Notes Score Weighting Adjustments" });
+        new Setting(containerEl).setName('Related notes score weighting').setHeading();
         containerEl.createEl("p", { text: "Higher values increase importance." });
 
         new Setting(containerEl)
@@ -148,9 +148,7 @@ export class TagTacticianSettingTab extends PluginSettingTab {
         // ==================
         // Nav by Tag
         // ==================
-        containerEl.createEl("br");
-        containerEl.createEl("br");
-        containerEl.createEl("h3", { text: "Tag Navigation Settings" });
+        new Setting(containerEl).setName('Tag navigation view').setHeading();
 
         new Setting(containerEl)
             .setName("Default navigation sorting")

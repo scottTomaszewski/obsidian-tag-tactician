@@ -5,6 +5,8 @@ import {
     TAbstractFile,
     TFolder,
     MarkdownView,
+    TFile,
+    Vault
 } from "obsidian";
 
 import {EditTagsModal} from "./src/batch/EditTagsModal";
@@ -24,7 +26,6 @@ export default class TagTacticianPlugin extends Plugin {
     private activeFilePath: string | null = null;
 
     async onload() {
-        console.log("Loading Tag Tactician plugin...");
         await this.loadSettings();
 
         // Register events for the Bulk Tag Editing
@@ -91,7 +92,6 @@ export default class TagTacticianPlugin extends Plugin {
     }
 
     onunload() {
-        console.log("Unloading Tag Tactician plugin...");
         this.app.workspace.detachLeavesOfType(RELATED_NOTES_VIEW_TYPE);
         this.app.workspace.detachLeavesOfType(TAG_NAVIGATION_VIEW_TYPE);
     }
@@ -99,7 +99,7 @@ export default class TagTacticianPlugin extends Plugin {
     private addTagMenuItem(menu: Menu, selection: TAbstractFile[]) {
         menu.addItem((item) => {
             item
-                .setTitle("Edit Tags (Frontmatter)")
+                .setTitle("Edit tags (frontmatter)")
                 .setIcon("hashtag")
                 .onClick(async () => {
                     const allItems = expandFolders(selection);
@@ -182,28 +182,19 @@ export default class TagTacticianPlugin extends Plugin {
     }
 }
 
-/**
- * Recursively expand any selected folders into all their files (including nested folders),
- * while leaving non-folder items as-is.
- */
 function expandFolders(selection: TAbstractFile[]): TAbstractFile[] {
     const results: TAbstractFile[] = [];
     for (const item of selection) {
         if (item instanceof TFolder) {
-            gatherFolderContents(item, results);
+            Vault.recurseChildren(item, (child) => {
+                if (child instanceof TFile) {
+                    results.push(child);
+                }
+            });
         } else {
+            // If it's not a folder, just add it as-is
             results.push(item);
         }
     }
     return results;
-}
-
-function gatherFolderContents(folder: TFolder, accumulator: TAbstractFile[]) {
-    for (const child of folder.children) {
-        if (child instanceof TFolder) {
-            gatherFolderContents(child, accumulator);
-        } else {
-            accumulator.push(child);
-        }
-    }
 }
