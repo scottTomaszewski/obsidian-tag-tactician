@@ -1,210 +1,225 @@
-import { ItemView, WorkspaceLeaf, TFile, setIcon, IconName, Menu, Notice } from "obsidian";
-import TagTacticianPlugin from "../../main";
+import { App, IconName, Menu, TFile, setIcon } from "obsidian";
 import { gatherTagsFromCache } from "../relatedView/TagIndexer";
 import { TagNavSortMode } from "../settings/PluginSettings";
 
 /**
- * Unique ID for the tag-based file navigation view.
+ * Represents the structure of the tag hierarchy.
  */
-export const TAG_NAVIGATION_VIEW_TYPE = "tag-navigation-view";
+export interface TagHierarchy {
+    [key: string]: {
+        files: Set<TFile>;
+        children: TagHierarchy;
+    };
+}
 
-export class NavByTagView extends ItemView {
-    plugin: TagTacticianPlugin;
-
-    /** Current sort mode */
+/**
+ * Handles the rendering and sorting logic for tag navigation
+ */
+export class TagNavigationRenderer {
+    private app: App;
+    private filterQuery: string = "";
+    private expandAll: boolean = false;
     private sortMode: TagNavSortMode;
 
-    /** Current filter text for searching tags and their files. */
-    private filterQuery: string = "";
-
-    /** Flag indicating whether we should expand all details by default. */
-    private expandAll: boolean = false;
-
-    /** Where we'll store a reference to the list container in the DOM. */
-    private listContainerEl: HTMLElement | null = null;
-
-    constructor(leaf: WorkspaceLeaf, plugin: TagTacticianPlugin) {
-        super(leaf);
-        this.plugin = plugin;
-        this.sortMode = plugin.settings.nbtDefaultSort;
-    }
-
-    getViewType(): string {
-        return TAG_NAVIGATION_VIEW_TYPE;
-    }
-
-    getDisplayText(): string {
-        return "Tag Navigation";
-    }
-
-    getIcon(): IconName {
-        return "folder-tree";
-    }
-
-    async onOpen() {
-        this.buildView();
-    }
-
-    async onClose() {
-        // ...
+    /**
+     * Create a new tag navigation renderer
+     */
+    constructor(app: App, sortMode: TagNavSortMode) {
+        this.app = app;
+        this.sortMode = sortMode;
     }
 
     /**
-     * Build the entire view container (only once).
-     * Header, controls, and the container for our list.
+     * Set the current sort mode
      */
-    private buildView(): void {
-        const container = this.containerEl;
-        container.empty(); // just in case
+    public setSortMode(mode: TagNavSortMode): void {
+        this.sortMode = mode;
+    }
 
-        container.addClass("tag-navigation-container");
+    /**
+     * Get the current sort mode
+     */
+    public getSortMode(): TagNavSortMode {
+        return this.sortMode;
+    }
 
-        // Header
-        const header = container.createEl("div", { cls: "tag-navigation-header" });
-        const titleRow = header.createEl("div", { cls: "tag-navigation-title-row" });
-        titleRow.createEl("h4", { text: "Tag Navigation" });
+    /**
+     * Set filter query for searching
+     */
+    public setFilterQuery(query: string): void {
+        this.filterQuery = query;
+    }
 
-        // Controls row
-        const controls = titleRow.createEl("div", { cls: "tag-navigation-controls" });
+    /**
+     * Get current filter query
+     */
+    public getFilterQuery(): string {
+        return this.filterQuery;
+    }
 
-        // Sort dropdown button
-        const sortBtn = controls.createEl("button", { cls: "tag-nav-sort-btn clickable-icon" });
-        this.updateSortButtonLabel(sortBtn);
-        sortBtn.setAttribute("aria-label", "Sort options");
-        sortBtn.title = "Click to open sort options";
+    /**
+     * Set expand all setting
+     */
+    public setExpandAll(expand: boolean): void {
+        this.expandAll = expand;
+    }
+
+    /**
+     * Get expand all setting
+     */
+    public getExpandAll(): boolean {
+        return this.expandAll;
+    }
+
+    /**
+     * Render the sort button with current mode
+     */
+    public renderSortButton(buttonEl: HTMLButtonElement): void {
+        // Clear button content
+        buttonEl.empty();
         
-        sortBtn.onclick = (event) => {
-            const menu = new Menu();
-            
-            menu.addItem((item) => {
-                item.setTitle("Sort alphabetically")
-                    .setIcon(this.sortMode === "alphabetically-descending" ? "checkmark" : "")
-                    .onClick(() => {
-                        this.sortMode = "alphabetically-descending";
-                        this.updateSortButtonLabel(sortBtn);
-                        this.renderList();
-                    });
-            });
-            
-            menu.addItem((item) => {
-                item.setTitle("Sort by note count")
-                    .setIcon(this.sortMode === "file-count-descending" ? "checkmark" : "")
-                    .onClick(() => {
-                        this.sortMode = "file-count-descending";
-                        this.updateSortButtonLabel(sortBtn);
-                        this.renderList();
-                    });
-            });
-            
-            menu.addSeparator();
-            
-            menu.addItem((item) => {
-                item.setTitle("Sort by creation date (newest first)")
-                    .setIcon(this.sortMode === "created-time-descending" ? "checkmark" : "")
-                    .onClick(() => {
-                        this.sortMode = "created-time-descending";
-                        this.updateSortButtonLabel(sortBtn);
-                        this.renderList();
-                    });
-            });
-            
-            menu.addItem((item) => {
-                item.setTitle("Sort by creation date (oldest first)")
-                    .setIcon(this.sortMode === "created-time-ascending" ? "checkmark" : "")
-                    .onClick(() => {
-                        this.sortMode = "created-time-ascending";
-                        this.updateSortButtonLabel(sortBtn);
-                        this.renderList();
-                    });
-            });
-            
-            menu.addSeparator();
-            
-            menu.addItem((item) => {
-                item.setTitle("Sort by modification date (newest first)")
-                    .setIcon(this.sortMode === "modified-time-descending" ? "checkmark" : "")
-                    .onClick(() => {
-                        this.sortMode = "modified-time-descending";
-                        this.updateSortButtonLabel(sortBtn);
-                        this.renderList();
-                    });
-            });
-            
-            menu.addItem((item) => {
-                item.setTitle("Sort by modification date (oldest first)")
-                    .setIcon(this.sortMode === "modified-time-ascending" ? "checkmark" : "")
-                    .onClick(() => {
-                        this.sortMode = "modified-time-ascending";
-                        this.updateSortButtonLabel(sortBtn);
-                        this.renderList();
-                    });
-            });
-            
-            // Calculate position for the menu
-            const rect = sortBtn.getBoundingClientRect();
-            menu.showAtPosition({ x: rect.left, y: rect.bottom });
-            
-            // Prevent default to avoid any parent handlers
-            event.preventDefault();
-            event.stopPropagation();
-        };
-
-        // Expand/Collapse All button
-        const expandAllBtn = controls.createEl("button", { cls: "tag-nav-expand-btn clickable-icon" });
-        this.updateExpandButtonLabel(expandAllBtn);
-        expandAllBtn.onclick = () => {
-            this.expandAll = !this.expandAll;
-            this.updateExpandButtonLabel(expandAllBtn);
-            this.renderList();
-        };
-
-        // Filter input
-        const filterInput = header.createEl("input", {
-            type: "search",
-            placeholder: "Filter tags...",
-            cls: "tag-nav-filter-input",
+        // Add icon and label
+        let sortIcon: IconName;
+        let sortLabel: string;
+        
+        switch (this.sortMode) {
+            case "alphabetically-descending":
+                sortIcon = "arrow-down-az";
+                sortLabel = "Alphabetical";
+                buttonEl.setAttribute("aria-label", "Sorting alphabetically");
+                buttonEl.title = "Current sort: Alphabetically\nClick to change sort method";
+                break;
+            case "file-count-descending":
+                sortIcon = "arrow-down-10";
+                sortLabel = "Note Count";
+                buttonEl.setAttribute("aria-label", "Sorting by file count");
+                buttonEl.title = "Current sort: By note count (highest first)\nClick to change sort method";
+                break;
+            case "created-time-descending":
+                sortIcon = "calendar-plus";
+                sortLabel = "Newest First";
+                buttonEl.setAttribute("aria-label", "Sorting by newest notes first");
+                buttonEl.title = "Current sort: By creation date (newest first)\nClick to change sort method";
+                break;
+            case "created-time-ascending":
+                sortIcon = "calendar-minus";
+                sortLabel = "Oldest First";
+                buttonEl.setAttribute("aria-label", "Sorting by oldest notes first");
+                buttonEl.title = "Current sort: By creation date (oldest first)\nClick to change sort method";
+                break;
+            case "modified-time-descending":
+                sortIcon = "pencil";
+                sortLabel = "Recent Edits";
+                buttonEl.setAttribute("aria-label", "Sorting by most recently modified");
+                buttonEl.title = "Current sort: By modification date (most recent first)\nClick to change sort method";
+                break;
+            case "modified-time-ascending":
+                sortIcon = "pencil-line";
+                sortLabel = "Oldest Edits";
+                buttonEl.setAttribute("aria-label", "Sorting by least recently modified");
+                buttonEl.title = "Current sort: By modification date (oldest first)\nClick to change sort method";
+                break;
+        }
+        
+        // Add icon
+        const iconSpan = buttonEl.createSpan();
+        setIcon(iconSpan, sortIcon);
+        
+        // Add label
+        const labelSpan = buttonEl.createSpan({
+            text: sortLabel,
+            cls: "sort-btn-label"
         });
-        filterInput.value = this.filterQuery;
-        filterInput.oninput = () => {
-            this.filterQuery = filterInput.value.trim().toLowerCase();
-            // Instead of redrawing everything, just re-render the list:
-            this.renderList();
-        };
-
-        // Create the list container and remember it in a class property
-        this.listContainerEl = container.createEl("div", { cls: "tag-navigation-list-container" });
-
-        // Now do the initial list render
-        this.renderList();
     }
 
     /**
-     * Rebuilds only the hierarchy list portion, preserving the top controls (so we don't lose focus).
+     * Show the sort menu at the given button
      */
-    private renderList(): void {
-        // Ensure the container is present
-        if (!this.listContainerEl) return;
+    public showSortMenu(sortBtn: HTMLButtonElement, onSortChange: (mode: TagNavSortMode) => void): void {
+        const menu = new Menu();
+        
+        menu.addItem((item) => {
+            item.setTitle("Sort alphabetically")
+                .setIcon(this.sortMode === "alphabetically-descending" ? "checkmark" : "")
+                .onClick(() => {
+                    this.sortMode = "alphabetically-descending";
+                    onSortChange(this.sortMode);
+                });
+        });
+        
+        menu.addItem((item) => {
+            item.setTitle("Sort by note count")
+                .setIcon(this.sortMode === "file-count-descending" ? "checkmark" : "")
+                .onClick(() => {
+                    this.sortMode = "file-count-descending";
+                    onSortChange(this.sortMode);
+                });
+        });
+        
+        menu.addSeparator();
+        
+        menu.addItem((item) => {
+            item.setTitle("Sort by creation date (newest first)")
+                .setIcon(this.sortMode === "created-time-descending" ? "checkmark" : "")
+                .onClick(() => {
+                    this.sortMode = "created-time-descending";
+                    onSortChange(this.sortMode);
+                });
+        });
+        
+        menu.addItem((item) => {
+            item.setTitle("Sort by creation date (oldest first)")
+                .setIcon(this.sortMode === "created-time-ascending" ? "checkmark" : "")
+                .onClick(() => {
+                    this.sortMode = "created-time-ascending";
+                    onSortChange(this.sortMode);
+                });
+        });
+        
+        menu.addSeparator();
+        
+        menu.addItem((item) => {
+            item.setTitle("Sort by modification date (newest first)")
+                .setIcon(this.sortMode === "modified-time-descending" ? "checkmark" : "")
+                .onClick(() => {
+                    this.sortMode = "modified-time-descending";
+                    onSortChange(this.sortMode);
+                });
+        });
+        
+        menu.addItem((item) => {
+            item.setTitle("Sort by modification date (oldest first)")
+                .setIcon(this.sortMode === "modified-time-ascending" ? "checkmark" : "")
+                .onClick(() => {
+                    this.sortMode = "modified-time-ascending";
+                    onSortChange(this.sortMode);
+                });
+        });
+        
+        // Calculate position for the menu
+        const rect = sortBtn.getBoundingClientRect();
+        menu.showAtPosition({ x: rect.left, y: rect.bottom });
+    }
 
-        // Clear whatever is currently in the list
-        this.listContainerEl.empty();
-
-        // Build the full hierarchy
-        const tagHierarchy = this.buildTagHierarchy();
-
-        // Apply the filter
-        const filteredHierarchy = this.filterHierarchy(tagHierarchy, this.filterQuery);
-
-        // Apply the sorting
-        const sortedHierarchy = this.sortHierarchy(filteredHierarchy, this.sortMode);
-
-        // Render it
-        this.renderTagGroup(this.listContainerEl, sortedHierarchy);
+    /**
+     * Render the expand button with current state
+     */
+    public renderExpandButton(buttonEl: HTMLButtonElement): void {
+        if (this.expandAll) {
+            setIcon(buttonEl, "chevrons-down-up");
+            buttonEl.setAttribute("aria-label", "Collapse all tags");
+            buttonEl.title = "Currently showing expanded tags\nClick to collapse all tag groups";
+        } else {
+            setIcon(buttonEl, "chevrons-up-down");
+            buttonEl.setAttribute("aria-label", "Expand all tags");
+            buttonEl.title = "Currently showing collapsed tags\nClick to expand all tag groups";
+        }
     }
 
     /**
      * Build a hierarchical structure of tags and their associated notes.
      */
-    private buildTagHierarchy(): TagHierarchy {
+    public buildTagHierarchy(): TagHierarchy {
         const hierarchy: TagHierarchy = {};
         const allFiles = this.app.vault.getMarkdownFiles();
 
@@ -235,6 +250,9 @@ export class NavByTagView extends ItemView {
         return hierarchy;
     }
 
+    /**
+     * Helper method to add a file to the hierarchy at the given path
+     */
     private addToHierarchy(hierarchy: TagHierarchy, segments: string[], file: TFile) {
         const [head, ...rest] = segments;
         if (!hierarchy[head]) {
@@ -250,7 +268,7 @@ export class NavByTagView extends ItemView {
     /**
      * Recursively filter the hierarchy so only nodes/files that match `filterQuery` remain.
      */
-    private filterHierarchy(hierarchy: TagHierarchy, filterQuery: string): TagHierarchy {
+    public filterHierarchy(hierarchy: TagHierarchy, filterQuery: string): TagHierarchy {
         // If no filter, return the original
         if (!filterQuery) return hierarchy;
 
@@ -282,9 +300,9 @@ export class NavByTagView extends ItemView {
     }
 
     /**
-     * Sort the hierarchy either alphabetically or by descending total file count.
+     * Sort the hierarchy using the current sort mode
      */
-    private sortHierarchy(
+    public sortHierarchy(
         hierarchy: TagHierarchy,
         mode: TagNavSortMode
     ): TagHierarchy {
@@ -380,13 +398,13 @@ export class NavByTagView extends ItemView {
     /**
      * Render the tag hierarchy recursively.
      */
-    private renderTagGroup(container: HTMLElement, group: TagHierarchy, path: string[] = []) {
+    public renderTagGroup(container: HTMLElement, group: TagHierarchy, path: string[] = [], openFileCallback: (file: TFile) => void) {
         for (const [key, { files, children }] of Object.entries(group)) {
             // Single-child collapsing check
             const shouldCollapse = Object.keys(children).length === 1 && files.size === 0;
             if (shouldCollapse) {
                 const [nextKey, nextValue] = Object.entries(children)[0];
-                this.renderTagGroup(container, { [`${key}/${nextKey}`]: nextValue }, path);
+                this.renderTagGroup(container, { [`${key}/${nextKey}`]: nextValue }, path, openFileCallback);
                 continue;
             }
 
@@ -435,7 +453,7 @@ export class NavByTagView extends ItemView {
             }
 
             // Recursively render children
-            this.renderTagGroup(groupContainer, children, [...path, key]);
+            this.renderTagGroup(groupContainer, children, [...path, key], openFileCallback);
 
             // Sort files according to the current sort mode
             let sortedFiles = Array.from(files);
@@ -496,7 +514,7 @@ export class NavByTagView extends ItemView {
 
                 link.onclick = (evt) => {
                     evt.preventDefault();
-                    this.app.workspace.getLeaf().openFile(file);
+                    openFileCallback(file);
                 };
             }
         }
@@ -505,7 +523,7 @@ export class NavByTagView extends ItemView {
     /**
      * Returns the total number of files for a given node (including children).
      */
-    private getTotalFileCountForNode(nodeData: { files: Set<TFile>; children: TagHierarchy }): number {
+    public getTotalFileCountForNode(nodeData: { files: Set<TFile>; children: TagHierarchy }): number {
         let count = nodeData.files.size;
         for (const child of Object.values(nodeData.children)) {
             count += this.getTotalFileCountForNode(child);
@@ -517,7 +535,7 @@ export class NavByTagView extends ItemView {
      * Helper method to highlight all occurrences of `filter` within `original`,
      * wrapping them in <span class="highlight">... </span>. (Case-insensitive)
      */
-    private highlightMatches(original: string, filter: string): string {
+    public highlightMatches(original: string, filter: string): string {
         if (!filter) return original;
 
         // Escape regex specials in the filter text
@@ -528,87 +546,4 @@ export class NavByTagView extends ItemView {
         // Replace all matches with <span class="highlight">$1</span>
         return original.replace(regex, `<span class="highlight">$1</span>`);
     }
-
-    /**
-     * Update the sort button icon and tooltip based on current sort mode
-     */
-    private updateSortButtonLabel(buttonEl: HTMLButtonElement) {
-        // Clear button content
-        buttonEl.empty();
-        
-        // Add icon and label
-        let sortIcon: IconName;
-        let sortLabel: string;
-        
-        switch (this.sortMode) {
-            case "alphabetically-descending":
-                sortIcon = "arrow-down-az";
-                sortLabel = "Alphabetical";
-                buttonEl.setAttribute("aria-label", "Sorting alphabetically");
-                buttonEl.title = "Current sort: Alphabetically\nClick to change sort method";
-                break;
-            case "file-count-descending":
-                sortIcon = "arrow-down-10";
-                sortLabel = "Note Count";
-                buttonEl.setAttribute("aria-label", "Sorting by file count");
-                buttonEl.title = "Current sort: By note count (highest first)\nClick to change sort method";
-                break;
-            case "created-time-descending":
-                sortIcon = "calendar-plus";
-                sortLabel = "Newest First";
-                buttonEl.setAttribute("aria-label", "Sorting by newest notes first");
-                buttonEl.title = "Current sort: By creation date (newest first)\nClick to change sort method";
-                break;
-            case "created-time-ascending":
-                sortIcon = "calendar-minus";
-                sortLabel = "Oldest First";
-                buttonEl.setAttribute("aria-label", "Sorting by oldest notes first");
-                buttonEl.title = "Current sort: By creation date (oldest first)\nClick to change sort method";
-                break;
-            case "modified-time-descending":
-                sortIcon = "pencil";
-                sortLabel = "Recent Edits";
-                buttonEl.setAttribute("aria-label", "Sorting by most recently modified");
-                buttonEl.title = "Current sort: By modification date (most recent first)\nClick to change sort method";
-                break;
-            case "modified-time-ascending":
-                sortIcon = "pencil-line";
-                sortLabel = "Oldest Edits";
-                buttonEl.setAttribute("aria-label", "Sorting by least recently modified");
-                buttonEl.title = "Current sort: By modification date (oldest first)\nClick to change sort method";
-                break;
-        }
-        
-        // Add icon
-        const iconSpan = buttonEl.createSpan();
-        setIcon(iconSpan, sortIcon);
-        
-        // Add label
-        const labelSpan = buttonEl.createSpan({
-            text: sortLabel,
-            cls: "sort-btn-label"
-        });
-    }
-
-    private updateExpandButtonLabel(buttonEl: HTMLButtonElement) {
-        if (this.expandAll) {
-            setIcon(buttonEl, "chevrons-down-up");
-            buttonEl.setAttribute("aria-label", "Collapse all tags");
-            buttonEl.title = "Currently showing expanded tags\nClick to collapse all tag groups";
-        } else {
-            setIcon(buttonEl, "chevrons-up-down");
-            buttonEl.setAttribute("aria-label", "Expand all tags");
-            buttonEl.title = "Currently showing collapsed tags\nClick to expand all tag groups";
-        }
-    }
-}
-
-/**
- * Represents the structure of the tag hierarchy.
- */
-interface TagHierarchy {
-    [key: string]: {
-        files: Set<TFile>;
-        children: TagHierarchy;
-    };
-}
+} 

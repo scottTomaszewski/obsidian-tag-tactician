@@ -176,12 +176,21 @@ export default class TagTacticianPlugin extends Plugin {
      * Activate the Related Notes view
      */
     async activateRelatedNotesView() {
-        let leaf = this.app.workspace.getLeavesOfType(RELATED_NOTES_VIEW_TYPE).first();
+        // Find existing leaf or create a new one
+        const leaves = this.app.workspace.getLeavesOfType(RELATED_NOTES_VIEW_TYPE);
+        let leaf = leaves.length > 0 ? leaves[0] : null;
+        
         if (!leaf) {
-            leaf = this.app.workspace.getRightLeaf(false);
-            await leaf.setViewState({type: RELATED_NOTES_VIEW_TYPE});
+            // Create a new leaf
+            const rightLeaf = this.app.workspace.getRightLeaf(false);
+            if (rightLeaf) {
+                await rightLeaf.setViewState({type: RELATED_NOTES_VIEW_TYPE});
+                this.app.workspace.revealLeaf(rightLeaf);
+            }
+        } else {
+            // Use existing leaf
+            this.app.workspace.revealLeaf(leaf);
         }
-        this.app.workspace.revealLeaf(leaf);
         this.updateRelatedNotesView();
     }
 
@@ -219,12 +228,21 @@ export default class TagTacticianPlugin extends Plugin {
      * Activate the Tag Navigation view
      */
     async activateTagNavigationView() {
-        let leaf = this.app.workspace.getLeavesOfType(TAG_NAVIGATION_VIEW_TYPE).first();
+        // Find existing leaf or create a new one
+        const leaves = this.app.workspace.getLeavesOfType(TAG_NAVIGATION_VIEW_TYPE);
+        let leaf = leaves.length > 0 ? leaves[0] : null;
+        
         if (!leaf) {
-            leaf = this.app.workspace.getRightLeaf(false);
-            await leaf.setViewState({ type: TAG_NAVIGATION_VIEW_TYPE });
+            // Create a new leaf
+            const rightLeaf = this.app.workspace.getRightLeaf(false);
+            if (rightLeaf) {
+                await rightLeaf.setViewState({ type: TAG_NAVIGATION_VIEW_TYPE });
+                this.app.workspace.revealLeaf(rightLeaf);
+            }
+        } else {
+            // Use existing leaf
+            this.app.workspace.revealLeaf(leaf);
         }
-        this.app.workspace.revealLeaf(leaf);
     }
 }
 

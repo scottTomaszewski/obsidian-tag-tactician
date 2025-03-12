@@ -1,5 +1,6 @@
 import { App, PluginSettingTab, Setting } from "obsidian";
 import TagTacticianPlugin from "../../main";
+import { TagNavSortMode } from "./PluginSettings";
 
 export class TagTacticianSettingTab extends PluginSettingTab {
     plugin: TagTacticianPlugin;
@@ -41,7 +42,7 @@ export class TagTacticianSettingTab extends PluginSettingTab {
                     // Current value from plugin settings
                     .setValue(this.plugin.settings.tagListStyle)
 
-                    // Save the user’s selection
+                    // Save the user's selection
                     .onChange(async (value) => {
                         this.plugin.settings.tagListStyle = value as "hyphens" | "brackets";
                         await this.plugin.saveSettings();
@@ -152,17 +153,20 @@ export class TagTacticianSettingTab extends PluginSettingTab {
 
         new Setting(containerEl)
             .setName("Default navigation sorting")
-            .setDesc("Sort alphabetically or by notes with the tag.")
+            .setDesc("Choose how tags and notes should be sorted.")
             .addDropdown((dropdown) => {
                 dropdown
                     .addOption("alphabetically-descending", "Alphabetically")
                     .addOption("file-count-descending", "By note count")
+                    .addOption("created-time-descending", "Newest notes first")
+                    .addOption("created-time-ascending", "Oldest notes first")
+                    .addOption("modified-time-descending", "Recently modified first")
+                    .addOption("modified-time-ascending", "Least recently modified first")
                     .setValue(this.plugin.settings.nbtDefaultSort)
                     .onChange(async (value) => {
-                        this.plugin.settings.nbtDefaultSort = value as "alphabetically-descending" | "file-count-descending";
+                        this.plugin.settings.nbtDefaultSort = value as TagNavSortMode;
                         await this.plugin.saveSettings();
                     });
             });
-
     }
 }

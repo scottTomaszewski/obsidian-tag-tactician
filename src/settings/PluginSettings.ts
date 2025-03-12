@@ -1,5 +1,13 @@
 export type TagListStyle = "hyphens" | "brackets";
 
+export type TagNavSortMode = 
+    | "alphabetically-descending" 
+    | "file-count-descending"
+    | "created-time-descending"
+    | "created-time-ascending"  
+    | "modified-time-descending"
+    | "modified-time-ascending";
+
 export interface TagTacticianSettings {
     // ==================
     // Batch
@@ -24,7 +32,7 @@ export interface TagTacticianSettings {
     // ==================
     // Nav by Tags
     // ==================
-    nbtDefaultSort: "alphabetically-descending" | "file-count-descending";
+    nbtDefaultSort: TagNavSortMode;
 }
 
 export const DEFAULT_SETTINGS: TagTacticianSettings = {

@@ -182,6 +182,33 @@
     margin-bottom: 8px;
 }
 
+/* Style the sort button to indicate it's a dropdown */
+.tag-navigation-container .tag-nav-sort-btn,
+.tag-navigation-container .tag-nav-expand-btn {
+    display: flex;
+    align-items: center;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    background-color: var(--background-secondary);
+    color: var(--text-normal);
+    border: 1px solid var(--background-modifier-border);
+}
+
+.tag-navigation-container .tag-nav-sort-btn:hover,
+.tag-navigation-container .tag-nav-expand-btn:hover {
+    background-color: var(--background-modifier-hover);
+}
+
+.tag-navigation-container .tag-nav-sort-btn .svg-icon {
+    margin-right: 4px;
+}
+
+.tag-navigation-container .tag-nav-sort-btn .sort-btn-label {
+    margin-left: 4px;
+    font-size: 0.9em;
+}
+
 .tag-navigation-container .tag-nav-filter-input {
     width: 100%;
     margin-bottom: 12px;
@@ -259,14 +286,21 @@
 }
 
 .tag-navigation-container .tag-group-note a {
-    display: block;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     text-decoration: none;
     color: var(--text-normal);
     padding: 2px 6px;
     border-radius: 3px;
     font-size: 0.9em;
-    overflow: hidden;
-    text-overflow: ellipsis;
+}
+
+.tag-navigation-container .tag-group-note a .tag-note-time {
+    font-size: 0.8em;
+    color: var(--text-muted);
+    margin-left: 8px;
+    white-space: nowrap;
 }
 
 .tag-navigation-container .tag-group-note a:hover {
