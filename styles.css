@@ -1,307 +1,283 @@
+/* 
+ * Tag Tactician Plugin Styles
+ * Organized by feature: Bulk Tag Editor, Related Notes View, and Nav by Tag
+ */
+
+/* =============================================
+ * Common Styles
+ * ============================================= */
+.highlight {
+    background-color: var(--text-highlight-bg);
+    color: var(--text-normal);
+    border-radius: 2px;
+    padding: 0 2px;
+}
+
+/* =============================================
+ * Bulk Tag Editor Modal
+ * ============================================= */
 .tt-bulk-tag-modal {
-    /* Keep a wider modal overall, if desired */
     width: 80vw;
-
-
-    .warning {
-        color: red;
-    }
-
-    /* Container: treat as a table with auto layout */
-
-    .bulk-tag-table-container {
-        display: table;
-        /* Let the table expand based on content;
-           if you still want it to fill the modal width, keep width: 100%. */
-        width: 100%;
-
-        /* Key change: remove table-layout: fixed;
-           so columns can auto-size to content. */
-        table-layout: auto;
-
-        border: 1px solid var(--background-modifier-border);
-        border-radius: 4px;
-        margin-top: 1rem;
-    }
-
-    /* Zebra striping for every even row, but skip the header row */
-
-    .bulk-tag-table-container .bulk-tag-table-row:nth-child(even):not(.table-header-row) {
-        background-color: var(--background-primary-alt);
-    }
-
-    /* Each row is a table-row */
-
-    .bulk-tag-table-row {
-        display: table-row;
-        /* Remove flex properties so it truly behaves like a table. */
-        /* border-bottom is optional for row separators */
-        border-bottom: 1px solid var(--background-modifier-border);
-    }
-
-    /* Each cell is display: table-cell */
-
-    .bulk-tag-table-row > span {
-        display: table-cell;
-        padding: 0.5rem;
-        vertical-align: middle;
-        /* Optionally, give a right border to each cell:
-           border-right: 1px solid var(--background-modifier-border);
-         */
-        /* If you want to allow wide content to remain on one line: */
-        white-space: nowrap;
-        /* or, if you'd rather allow multi-line: white-space: normal; */
-    }
-
-    /* Checkbox column: let it size just enough for the checkbox */
-
-    .cb-col {
-        display: table-cell;
-        vertical-align: middle;
-        text-align: center;
-
-    }
-
-    /* Example of removing or reducing strict widths on these columns: */
-
-    .file-name-col {
-        /* Remove fixed widths if you want truly auto widths.
-           e.g., min-width: 8rem; (just to keep it from collapsing too small) */
-        /* Or let the table auto-allocate. */
-        font-weight: 500;
-        color: var(--text-accent);
-        overflow-wrap: anywhere;
-    }
-
-    /* Let these auto-size as well */
-
-    .current-tags-col {
-        overflow-wrap: anywhere;
-    }
-
-    .proposed-tags-col {
-        overflow-wrap: anywhere;
-    }
-
-    .current-tags-col a[disabled],
-    .proposed-tags-col a[disabled] {
-        pointer-events: none;
-    }
-
-    /* Header row styling */
-
-    .table-header-row {
-        background-color: var(--background-secondary-alt);
-        font-weight: 600;
-    }
 }
 
-.related-notes-container {
-    overflow-y: auto;
-
-    .related-notes-header {
-        padding: 0.5rem;
-    }
-
-    .related-notes-title-row {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-    }
-
-    .filter-input {
-        width: 100%;
-    }
-
-    .related-note-item {
-        font-size: var(--font-smaller);
-        display: flex;
-        align-items: flex-start;
-        padding: 0.5rem;
-    }
-
-    .related-note-item:nth-child(even) {
-        background-color: var(--background-primary-alt);
-    }
-
-    .related-note-score {
-        color: var(--text-faint);
-    }
-
-    .related-note-item-content {
-        display: flex;
-        align-items: flex-start;
-        flex-direction: column;
-        padding: 0 0.5rem;
-        width: 100%
-    }
-
-    .related-note-link {
-        display: inline-block;
-        width: calc(90%);
-        text-overflow: ellipsis;
-        overflow: hidden;
-        white-space: nowrap;
-    }
-
-    .related-note-tags {
-        font-size: var(--font-smallest);
-        display: inline-flex;
-        flex-wrap: wrap;
-
-        .tag {
-            margin: 0.5rem 0.25rem 0 0;
-            cursor: default;
-        }
-    }
-
-    .highlight {
-        background-color: var(--text-highlight-bg);
-    }
+.tt-bulk-tag-modal .warning {
+    color: var(--text-error);
 }
 
-/* Container styling */
-.tag-navigation-container {
-    padding: 0.5rem;
-    overflow-y: auto;
-
-    .tag-navigation-header {
-        margin-bottom: 0.5rem;
-    }
-
-    .tag-navigation-title-row {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-    }
-
-    .tag-navigation-controls {
-        display: inline-flex;
-        align-items: center;
-        justify-content: flex-end;
-    }
-
-    .tag-nav-filter-input {
-        width: 100%;
-    }
-
-    .tag-navigation-list-container {
-        color: var(--nav-item-color);
-        font-size: var(--nav-item-size);
-        font-weight: var(--nav-item-weight);
-        line-height: var(--line-height-tight);
-    }
-
-    /* Collapsible group styling */
-    .tag-group .tag-group {
-        overflow: hidden;
-        margin-left: 1rem;
-        /* TODO - come back to ellipsis this */
-    }
-
-    .tag-group-header {
-        padding: 0.25rem 0.5rem;
-        cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-        width: 100%;
-    }
-
-    /*This is the chevron*/
-    /*.tag-group-header::marker {*/
-    /*    color: var(--text-faint);*/
-    /*    content: " "*/
-    /*}*/
-
-    .tag-group-icon {
-        display: flex;
-        color: var(--text-faint);
-        margin-right: 0.25rem;
-    }
-
-    .tag-group-icon svg.svg-icon {
-        height: 16px;
-        width: 16px;
-    }
-
-    .tag-group-header:hover {
-        background-color: var(--background-modifier-hover);
-        border-radius: 0.25rem;
-    }
-
-    /* Nested tag dirs will have a left border */
-    .tag-group .tag-group .tag-group-header:hover {
-        border-radius: 0 0.25rem 0.25rem 0;
-    }
-
-    .tag-group > details,
-    .tag-group > .tag-group-list {
-        border-left: 1px solid var(--background-modifier-border);
-    }
-
-    /* Count of notes in a group */
-    .tag-group-count {
-        position: absolute;
-        right: 1rem;
-        color: var(--text-faint);
-    }
-
-    /* Notes list under each tag */
-    .tag-group-list {
-        /*list-style: none;*/
-        margin: 0;
-        margin-left: 1rem;
-        padding-left: 0rem;
-        /*border-left: 1px solid var(--background-modifier-border);*/
-    }
-
-    .tag-group-note {
-        margin: 0;
-    }
-
-    .tag-group-list .tag-group-note {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-    }
-
-    .tag-group-note a {
-        color: var(--nav-item-color-active);
-        text-decoration: none;
-        font-weight: 500;
-        transition: color 0.2s, text-decoration 0.2s;
-        width: 100%;
-        padding: 0.25rem 1.75rem;
-        text-overflow: ellipsis;
-        overflow: hidden;
-        white-space: nowrap;
-    }
-
-    .tag-group-note a:hover {
-        color: var(--nav-item-color-highlighted);
-        background-color: var(--background-modifier-hover);
-        border-radius: 0 0.25rem 0.25rem 0;
-    }
-
-    .highlight {
-        background-color: var(--text-highlight-bg);
-    }
-
-    .tag-group[open] {
-    }
-
-    /* Tag-based navigation "untagged" special group */
-    .tag-navigation-container .tag-group:first-of-type .tag-group-header {
-        color: var(--text-warning);
-        font-style: italic;
-    }
-}
-
-/* The "File Selection" setting row (for Select All buttons) */
-.setting-item[data-setting="File Selection"] {
+/* Table container and structure */
+.tt-bulk-tag-modal .bulk-tag-table-container {
+    display: table;
+    width: 100%;
+    table-layout: auto;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
     margin-top: 1rem;
 }
 
+/* Zebra striping for every even row, but skip the header row */
+.tt-bulk-tag-modal .bulk-tag-table-container .bulk-tag-table-row:nth-child(even):not(.table-header-row) {
+    background-color: var(--background-primary-alt);
+}
+
+.tt-bulk-tag-modal .bulk-tag-table-row {
+    display: table-row;
+    width: 100%;
+}
+
+.tt-bulk-tag-modal .bulk-tag-table-row > span {
+    display: table-cell;
+    padding: 8px;
+    vertical-align: middle;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    border-bottom: 1px solid var(--background-modifier-border);
+}
+
+/* Column styles */
+.tt-bulk-tag-modal .cb-col {
+    width: 24px;
+    text-align: center;
+    padding: 0 !important;
+}
+
+.tt-bulk-tag-modal .file-name-col {
+    width: 35%;
+    font-size: 0.9em;
+    white-space: normal;
+    word-break: break-all;
+}
+
+.tt-bulk-tag-modal .current-tags-col,
+.tt-bulk-tag-modal .proposed-tags-col {
+    width: 32.5%;
+}
+
+.tt-bulk-tag-modal .current-tags-col a[disabled],
+.tt-bulk-tag-modal .proposed-tags-col a[disabled] {
+    color: var(--text-muted);
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+.tt-bulk-tag-modal .table-header-row {
+    font-weight: bold;
+    background-color: var(--background-secondary);
+}
+
+/* Setting item customization */
+.setting-item[data-setting="File Selection"] {
+    border-top: none;
+}
+
 .setting-item[data-setting="File Selection"] .setting-item-control button {
-    margin-right: 0.5rem;
+    margin-right: 6px;
+}
+
+/* =============================================
+ * Related Notes View 
+ * ============================================= */
+.related-notes-container {
+    padding: 10px;
+}
+
+.related-notes-container .related-notes-header {
+    margin-bottom: 12px;
+}
+
+.related-notes-container .related-notes-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.related-notes-container .filter-input {
+    width: 100%;
+    margin-bottom: 12px;
+}
+
+.related-notes-container .related-note-item {
+    padding: 8px;
+    border-radius: 4px;
+    margin-bottom: 6px;
+}
+
+.related-notes-container .related-note-item:nth-child(even) {
+    background-color: var(--background-primary-alt);
+}
+
+.related-notes-container .related-note-score {
+    font-size: 0.8em;
+    color: var(--text-muted);
+}
+
+.related-notes-container .related-note-item-content {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.related-notes-container .related-note-link {
+    font-weight: 500;
+    text-decoration: none;
+    display: block;
+    margin-bottom: 2px;
+}
+
+.related-notes-container .related-note-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.related-notes-container .related-note-tags .tag {
+    font-size: 0.8em;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background-color: var(--tag-background);
+    color: var(--tag-color);
+}
+
+/* =============================================
+ * Tag Navigation View
+ * ============================================= */
+.tag-navigation-container {
+    padding: 10px;
+}
+
+.tag-navigation-container .tag-navigation-header {
+    margin-bottom: 12px;
+}
+
+.tag-navigation-container .tag-navigation-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.tag-navigation-container .tag-navigation-controls {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.tag-navigation-container .tag-nav-filter-input {
+    width: 100%;
+    margin-bottom: 12px;
+}
+
+.tag-navigation-container .tag-navigation-list-container {
+    overflow-y: auto;
+    height: calc(100% - 80px);
+    border-top: 1px solid var(--background-modifier-border);
+    padding-top: 8px;
+}
+
+.tag-navigation-container .tag-group .tag-group {
+    margin-left: 12px;
+    border-left: 1px solid var(--background-modifier-border);
+    padding-left: 8px;
+}
+
+.tag-navigation-container .tag-group-header {
+    display: flex;
+    align-items: center;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    margin-bottom: 2px;
+}
+
+.tag-navigation-container .tag-group-icon {
+    margin-right: 4px;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+}
+
+.tag-navigation-container .tag-group-icon svg.svg-icon {
+    height: 0.9em;
+    width: 0.9em;
+}
+
+.tag-navigation-container .tag-group-header:hover {
+    background-color: var(--background-modifier-hover);
+}
+
+.tag-navigation-container .tag-group .tag-group .tag-group-header:hover {
+    background-color: var(--background-modifier-hover);
+}
+
+.tag-navigation-container .tag-group > details,
+.tag-navigation-container .tag-group-list {
+    margin-left: 16px;
+}
+
+.tag-navigation-container .tag-group-count {
+    margin-left: 6px;
+    font-size: 0.8em;
+    color: var(--text-muted);
+    font-weight: normal;
+}
+
+.tag-navigation-container .tag-group-list {
+    list-style: none;
+    padding-left: 0;
+    margin-top: 4px;
+    margin-bottom: 8px;
+}
+
+.tag-navigation-container .tag-group-note {
+    margin-bottom: 3px;
+}
+
+.tag-navigation-container .tag-group-list .tag-group-note {
+    position: relative;
+    padding-left: 8px;
+}
+
+.tag-navigation-container .tag-group-note a {
+    display: block;
+    text-decoration: none;
+    color: var(--text-normal);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 0.9em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.tag-navigation-container .tag-group-note a:hover {
+    background-color: var(--background-modifier-hover);
+    color: var(--text-normal);
+}
+
+.tag-navigation-container .tag-group[open] {
+    margin-bottom: 8px;
+}
+
+.tag-navigation-container .tag-group:first-of-type .tag-group-header {
+    margin-top: 0;
 }

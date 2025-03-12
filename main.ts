@@ -9,25 +9,68 @@ import {
     Vault
 } from "obsidian";
 
-import {EditTagsModal} from "./src/batch/EditTagsModal";
-import {applyTagUpdates} from "./src/batch/FileTagProcessor";
-import {TagTacticianSettingTab} from "./src/settings/TagTacticianSettingTab";
+import { EditTagsModal } from "./src/batch/EditTagsModal";
+import { applyTagUpdates } from "./src/batch/FileTagProcessor";
+import { TagTacticianSettingTab } from "./src/settings/TagTacticianSettingTab";
+import { TagTacticianSettings, DEFAULT_SETTINGS } from "./src/settings/PluginSettings";
+import { TagIndexer } from "./src/relatedView/TagIndexer";
+import { RelatedNotesView, RELATED_NOTES_VIEW_TYPE } from "./src/relatedView/RelatedNotesView";
+import { NavByTagView, TAG_NAVIGATION_VIEW_TYPE } from "./src/navByTag/NavByTagView";
 
-import {TagTacticianSettings, DEFAULT_SETTINGS} from "./src/settings/PluginSettings";
-import {TagIndexer} from "./src/relatedView/TagIndexer";
-import {RelatedNotesView, RELATED_NOTES_VIEW_TYPE} from "./src/relatedView/RelatedNotesView";
-import {NavByTagView, TAG_NAVIGATION_VIEW_TYPE} from "./src/navByTag/NavByTagView";
-
+/**
+ * Main plugin class for Tag Tactician
+ */
 export default class TagTacticianPlugin extends Plugin {
     settings: TagTacticianSettings;
-
-    // "Related Notes" fields can now live in a separate class, but we keep a reference here:
     public tagIndexer: TagIndexer;
     private activeFilePath: string | null = null;
 
     async onload() {
         await this.loadSettings();
 
+        // Setup plugin features
+        this.setupBatchTagEditing();
+        this.setupRelatedNotesView();
+        this.setupNavByTag();
+
+        // Add the settings tab
+        this.addSettingTab(new TagTacticianSettingTab(this.app, this));
+    }
+
+    /**
+     * Clean up when plugin is disabled
+     */
+    onunload() {
+        this.app.workspace.detachLeavesOfType(RELATED_NOTES_VIEW_TYPE);
+        this.app.workspace.detachLeavesOfType(TAG_NAVIGATION_VIEW_TYPE);
+    }
+
+    // --------------------------------
+    // Settings
+    // --------------------------------
+    
+    /**
+     * Load plugin settings
+     */
+    async loadSettings() {
+        this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+    }
+
+    /**
+     * Save plugin settings
+     */
+    async saveSettings() {
+        await this.saveData(this.settings);
+    }
+
+    // --------------------------------
+    // Batch Tag Editing
+    // --------------------------------
+    
+    /**
+     * Set up batch tag editing feature
+     */
+    private setupBatchTagEditing() {
         // Register events for the Bulk Tag Editing
         this.registerEvent(
             this.app.workspace.on("file-menu", (menu, file) => {
@@ -35,22 +78,52 @@ export default class TagTacticianPlugin extends Plugin {
                 this.addTagMenuItem(menu, [file]);
             })
         );
+        
         this.registerEvent(
             this.app.workspace.on("files-menu", (menu, files) => {
                 if (!files || files.length === 0) return;
                 this.addTagMenuItem(menu, files);
             })
         );
+    }
 
-        this.setupNavByTag();
+    /**
+     * Add tag editing menu item to the context menu
+     */
+    private addTagMenuItem(menu: Menu, selection: TAbstractFile[]) {
+        menu.addItem((item) => {
+            item
+                .setTitle("Edit tags (frontmatter)")
+                .setIcon("hashtag")
+                .onClick(async () => {
+                    const allItems = expandFolders(selection);
+                    new EditTagsModal(this.app, allItems, async (updates) => {
+                        const modifiedCount = await applyTagUpdates(
+                            this.app,
+                            updates,
+                            this.settings
+                        );
+                        new Notice(`Updated frontmatter tags in ${modifiedCount} file(s).`);
+                    }).open();
+                });
+        });
+    }
 
+    // --------------------------------
+    // Related Notes
+    // --------------------------------
+    
+    /**
+     * Set up the Related Notes view
+     */
+    private setupRelatedNotesView() {
         // Initialize the TagIndexer (for "Related Notes")
         this.tagIndexer = new TagIndexer(this);
-
+        
         // Register the "Related Notes" view
         this.registerView(RELATED_NOTES_VIEW_TYPE, (leaf) => new RelatedNotesView(leaf, this));
 
-        // 4) Add command to show the "Related Notes" sidebar
+        // Add command to show the "Related Notes" sidebar
         this.addCommand({
             id: "open-related-notes-view",
             name: "Open Related Notes Sidebar",
@@ -84,51 +157,13 @@ export default class TagTacticianPlugin extends Plugin {
         // Build the tag index after layout is ready (so getMarkdownFiles() won't be empty)
         this.app.workspace.onLayoutReady(async () => {
             await this.tagIndexer.buildIndex();
-            console.log(`[RelatedNotes] Index built after layout ready.`);
-        });
-
-        // Add the settings tab
-        this.addSettingTab(new TagTacticianSettingTab(this.app, this));
-    }
-
-    onunload() {
-        this.app.workspace.detachLeavesOfType(RELATED_NOTES_VIEW_TYPE);
-        this.app.workspace.detachLeavesOfType(TAG_NAVIGATION_VIEW_TYPE);
-    }
-
-    private addTagMenuItem(menu: Menu, selection: TAbstractFile[]) {
-        menu.addItem((item) => {
-            item
-                .setTitle("Edit tags (frontmatter)")
-                .setIcon("hashtag")
-                .onClick(async () => {
-                    const allItems = expandFolders(selection);
-                    new EditTagsModal(this.app, allItems, async (updates) => {
-                        const modifiedCount = await applyTagUpdates(
-                            this.app,
-                            updates,
-                            this.settings
-                        );
-                        new Notice(`Updated frontmatter tags in ${modifiedCount} file(s).`);
-                    }).open();
-                });
+            console.log(`[Tag Tactician] Related notes index built after layout ready.`);
         });
     }
 
-    // --------------------------------
-    // Settings
-    // --------------------------------
-    async loadSettings() {
-        this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
-    }
-
-    async saveSettings() {
-        await this.saveData(this.settings);
-    }
-
-    // --------------------------------
-    // Related Notes
-    // --------------------------------
+    /**
+     * Update the Related Notes view
+     */
     public updateRelatedNotesView() {
         const leaves = this.app.workspace.getLeavesOfType(RELATED_NOTES_VIEW_TYPE);
         if (!leaves.length) return;
@@ -137,6 +172,9 @@ export default class TagTacticianPlugin extends Plugin {
         if (view) view.refresh();
     }
 
+    /**
+     * Activate the Related Notes view
+     */
     async activateRelatedNotesView() {
         let leaf = this.app.workspace.getLeavesOfType(RELATED_NOTES_VIEW_TYPE).first();
         if (!leaf) {
@@ -148,22 +186,27 @@ export default class TagTacticianPlugin extends Plugin {
     }
 
     /**
+     * Compute notes related to the active note
      * We re-scan the current note's tags, then ask `tagIndexer` to rank.
      */
     public computeRelatedNotes(): Array<{ notePath: string; score: number }> {
         if (!this.activeFilePath) return [];
-
         return this.tagIndexer.computeRelatedNotes(this.activeFilePath);
     }
 
     // --------------------------------
     // Nav By Tag
     // --------------------------------
+    
+    /**
+     * Set up the Tag Navigation view
+     */
     private setupNavByTag() {
         this.registerView(
             TAG_NAVIGATION_VIEW_TYPE,
             (leaf) => new NavByTagView(leaf, this)
         );
+        
         // Add a command to open the tag-based file navigation view
         this.addCommand({
             id: "open-tag-navigation-view",
@@ -172,6 +215,9 @@ export default class TagTacticianPlugin extends Plugin {
         });
     }
 
+    /**
+     * Activate the Tag Navigation view
+     */
     async activateTagNavigationView() {
         let leaf = this.app.workspace.getLeavesOfType(TAG_NAVIGATION_VIEW_TYPE).first();
         if (!leaf) {
@@ -182,6 +228,9 @@ export default class TagTacticianPlugin extends Plugin {
     }
 }
 
+/**
+ * Helper function to expand folders to files for batch operations
+ */
 function expandFolders(selection: TAbstractFile[]): TAbstractFile[] {
     const results: TAbstractFile[] = [];
     for (const item of selection) {
