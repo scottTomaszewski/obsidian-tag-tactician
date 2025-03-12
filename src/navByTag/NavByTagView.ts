@@ -1,32 +1,25 @@
-import { ItemView, WorkspaceLeaf, TFile, setIcon, IconName, Menu, Notice } from "obsidian";
+import { ItemView, WorkspaceLeaf, IconName } from "obsidian";
 import TagTacticianPlugin from "../../main";
-import { gatherTagsFromCache } from "../relatedView/TagIndexer";
-import { TagNavSortMode } from "../settings/PluginSettings";
+import { TagNavigationRenderer } from "./TagNavigationRenderer";
 
 /**
  * Unique ID for the tag-based file navigation view.
  */
 export const TAG_NAVIGATION_VIEW_TYPE = "tag-navigation-view";
 
+/**
+ * View component for tag-based file navigation.
+ */
 export class NavByTagView extends ItemView {
-    plugin: TagTacticianPlugin;
-
-    /** Current sort mode */
-    private sortMode: TagNavSortMode;
-
-    /** Current filter text for searching tags and their files. */
-    private filterQuery: string = "";
-
-    /** Flag indicating whether we should expand all details by default. */
-    private expandAll: boolean = false;
-
-    /** Where we'll store a reference to the list container in the DOM. */
+    private plugin: TagTacticianPlugin;
+    private renderer: TagNavigationRenderer;
     private listContainerEl: HTMLElement | null = null;
+    private filterQuery: string = "";
 
     constructor(leaf: WorkspaceLeaf, plugin: TagTacticianPlugin) {
         super(leaf);
         this.plugin = plugin;
-        this.sortMode = plugin.settings.nbtDefaultSort;
+        this.renderer = new TagNavigationRenderer(this.app, plugin.settings.nbtDefaultSort);
     }
 
     getViewType(): string {
@@ -46,17 +39,15 @@ export class NavByTagView extends ItemView {
     }
 
     async onClose() {
-        // ...
+        // Clean up if needed
     }
 
     /**
-     * Build the entire view container (only once).
-     * Header, controls, and the container for our list.
+     * Build the view container including controls and list area
      */
     private buildView(): void {
         const container = this.containerEl;
-        container.empty(); // just in case
-
+        container.empty();
         container.addClass("tag-navigation-container");
 
         // Header
@@ -69,80 +60,18 @@ export class NavByTagView extends ItemView {
 
         // Sort dropdown button
         const sortBtn = controls.createEl("button", { cls: "tag-nav-sort-btn clickable-icon" });
-        this.updateSortButtonLabel(sortBtn);
+        this.renderer.renderSortButton(sortBtn);
         sortBtn.setAttribute("aria-label", "Sort options");
         sortBtn.title = "Click to open sort options";
         
         sortBtn.onclick = (event) => {
-            const menu = new Menu();
-            
-            menu.addItem((item) => {
-                item.setTitle("Sort alphabetically")
-                    .setIcon(this.sortMode === "alphabetically-descending" ? "checkmark" : "")
-                    .onClick(() => {
-                        this.sortMode = "alphabetically-descending";
-                        this.updateSortButtonLabel(sortBtn);
-                        this.renderList();
-                    });
+            // Delegate to renderer to show menu
+            this.renderer.showSortMenu(sortBtn, (newMode) => {
+                // Update button UI
+                this.renderer.renderSortButton(sortBtn);
+                // Re-render the list
+                this.renderList();
             });
-            
-            menu.addItem((item) => {
-                item.setTitle("Sort by note count")
-                    .setIcon(this.sortMode === "file-count-descending" ? "checkmark" : "")
-                    .onClick(() => {
-                        this.sortMode = "file-count-descending";
-                        this.updateSortButtonLabel(sortBtn);
-                        this.renderList();
-                    });
-            });
-            
-            menu.addSeparator();
-            
-            menu.addItem((item) => {
-                item.setTitle("Sort by creation date (newest first)")
-                    .setIcon(this.sortMode === "created-time-descending" ? "checkmark" : "")
-                    .onClick(() => {
-                        this.sortMode = "created-time-descending";
-                        this.updateSortButtonLabel(sortBtn);
-                        this.renderList();
-                    });
-            });
-            
-            menu.addItem((item) => {
-                item.setTitle("Sort by creation date (oldest first)")
-                    .setIcon(this.sortMode === "created-time-ascending" ? "checkmark" : "")
-                    .onClick(() => {
-                        this.sortMode = "created-time-ascending";
-                        this.updateSortButtonLabel(sortBtn);
-                        this.renderList();
-                    });
-            });
-            
-            menu.addSeparator();
-            
-            menu.addItem((item) => {
-                item.setTitle("Sort by modification date (newest first)")
-                    .setIcon(this.sortMode === "modified-time-descending" ? "checkmark" : "")
-                    .onClick(() => {
-                        this.sortMode = "modified-time-descending";
-                        this.updateSortButtonLabel(sortBtn);
-                        this.renderList();
-                    });
-            });
-            
-            menu.addItem((item) => {
-                item.setTitle("Sort by modification date (oldest first)")
-                    .setIcon(this.sortMode === "modified-time-ascending" ? "checkmark" : "")
-                    .onClick(() => {
-                        this.sortMode = "modified-time-ascending";
-                        this.updateSortButtonLabel(sortBtn);
-                        this.renderList();
-                    });
-            });
-            
-            // Calculate position for the menu
-            const rect = sortBtn.getBoundingClientRect();
-            menu.showAtPosition({ x: rect.left, y: rect.bottom });
             
             // Prevent default to avoid any parent handlers
             event.preventDefault();
@@ -151,10 +80,11 @@ export class NavByTagView extends ItemView {
 
         // Expand/Collapse All button
         const expandAllBtn = controls.createEl("button", { cls: "tag-nav-expand-btn clickable-icon" });
-        this.updateExpandButtonLabel(expandAllBtn);
+        this.renderer.renderExpandButton(expandAllBtn);
         expandAllBtn.onclick = () => {
-            this.expandAll = !this.expandAll;
-            this.updateExpandButtonLabel(expandAllBtn);
+            // Toggle expand state
+            this.renderer.setExpandAll(!this.renderer.getExpandAll());
+            this.renderer.renderExpandButton(expandAllBtn);
             this.renderList();
         };
 
@@ -167,448 +97,35 @@ export class NavByTagView extends ItemView {
         filterInput.value = this.filterQuery;
         filterInput.oninput = () => {
             this.filterQuery = filterInput.value.trim().toLowerCase();
-            // Instead of redrawing everything, just re-render the list:
+            this.renderer.setFilterQuery(this.filterQuery);
             this.renderList();
         };
 
-        // Create the list container and remember it in a class property
+        // Create the list container
         this.listContainerEl = container.createEl("div", { cls: "tag-navigation-list-container" });
 
-        // Now do the initial list render
+        // Do initial render
         this.renderList();
     }
 
     /**
-     * Rebuilds only the hierarchy list portion, preserving the top controls (so we don't lose focus).
+     * Render the tag hierarchy list
      */
     private renderList(): void {
-        // Ensure the container is present
         if (!this.listContainerEl) return;
-
-        // Clear whatever is currently in the list
+        
+        // Clear existing content
         this.listContainerEl.empty();
 
-        // Build the full hierarchy
-        const tagHierarchy = this.buildTagHierarchy();
-
-        // Apply the filter
-        const filteredHierarchy = this.filterHierarchy(tagHierarchy, this.filterQuery);
-
-        // Apply the sorting
-        const sortedHierarchy = this.sortHierarchy(filteredHierarchy, this.sortMode);
-
-        // Render it
-        this.renderTagGroup(this.listContainerEl, sortedHierarchy);
-    }
-
-    /**
-     * Build a hierarchical structure of tags and their associated notes.
-     */
-    private buildTagHierarchy(): TagHierarchy {
-        const hierarchy: TagHierarchy = {};
-        const allFiles = this.app.vault.getMarkdownFiles();
-
-        for (const file of allFiles) {
-            // Get file metadata cache, handle null case
-            const fileCache = this.app.metadataCache.getFileCache(file);
-            // Only process files with metadata cache
-            if (fileCache) {
-                const tags = gatherTagsFromCache(fileCache);
-                if (tags.size === 0) {
-                    if (!hierarchy["untagged"]) {
-                        hierarchy["untagged"] = { files: new Set(), children: {} };
-                    }
-                    hierarchy["untagged"].files.add(file);
-                } else {
-                    for (const tag of tags) {
-                        this.addToHierarchy(hierarchy, tag.split("/"), file);
-                    }
-                }
-            } else {
-                // Add to untagged if no metadata cache is available
-                if (!hierarchy["untagged"]) {
-                    hierarchy["untagged"] = { files: new Set(), children: {} };
-                }
-                hierarchy["untagged"].files.add(file);
-            }
-        }
-        return hierarchy;
-    }
-
-    private addToHierarchy(hierarchy: TagHierarchy, segments: string[], file: TFile) {
-        const [head, ...rest] = segments;
-        if (!hierarchy[head]) {
-            hierarchy[head] = { files: new Set(), children: {} };
-        }
-        if (rest.length === 0) {
-            hierarchy[head].files.add(file);
-        } else {
-            this.addToHierarchy(hierarchy[head].children, rest, file);
-        }
-    }
-
-    /**
-     * Recursively filter the hierarchy so only nodes/files that match `filterQuery` remain.
-     */
-    private filterHierarchy(hierarchy: TagHierarchy, filterQuery: string): TagHierarchy {
-        // If no filter, return the original
-        if (!filterQuery) return hierarchy;
-
-        const result: TagHierarchy = {};
-
-        for (const [key, { files, children }] of Object.entries(hierarchy)) {
-            const tagNameMatches = key.toLowerCase().includes(filterQuery);
-            const matchingFiles = new Set(
-                [...files].filter((file) =>
-                    file.basename.toLowerCase().includes(filterQuery)
-                )
-            );
-            const filteredChildren = this.filterHierarchy(children, filterQuery);
-
-            // If the tag name itself matches, or some file names match, or children matched
-            if (tagNameMatches || matchingFiles.size > 0 || Object.keys(filteredChildren).length > 0) {
-                result[key] = {
-                    files: new Set([...matchingFiles]),
-                    children: filteredChildren,
-                };
-                // If tagNameMatches but no direct file matches, keep original files
-                if (tagNameMatches && matchingFiles.size === 0 && files.size > 0) {
-                    result[key].files = new Set([...files]);
-                }
-            }
-        }
-
-        return result;
-    }
-
-    /**
-     * Sort the hierarchy either alphabetically or by descending total file count.
-     */
-    private sortHierarchy(
-        hierarchy: TagHierarchy,
-        mode: TagNavSortMode
-    ): TagHierarchy {
-        const sortedEntries = Object.entries(hierarchy).map(([key, node]) => {
-            return [
-                key,
-                {
-                    files: node.files,
-                    children: this.sortHierarchy(node.children, mode),
-                },
-            ] as const;
-        });
-
-        switch (mode) {
-            case "alphabetically-descending":
-                sortedEntries.sort((a, b) =>
-                    a[0].localeCompare(b[0], undefined, { sensitivity: "base" })
-                );
-                break;
-                
-            case "file-count-descending":
-                sortedEntries.sort((a, b) => {
-                    const countA = this.getTotalFileCountForNode(a[1]);
-                    const countB = this.getTotalFileCountForNode(b[1]);
-                    if (countB === countA) {
-                        // tie-break by alphabetical
-                        return a[0].localeCompare(b[0], undefined, { sensitivity: "base" });
-                    }
-                    return countB - countA; // descending
-                });
-                break;
-                
-            case "created-time-descending":
-            case "created-time-ascending":
-                sortedEntries.sort((a, b) => {
-                    const filesA = Array.from(a[1].files);
-                    const filesB = Array.from(b[1].files);
-                    if (filesA.length === 0 && filesB.length === 0) {
-                        return a[0].localeCompare(b[0], undefined, { sensitivity: "base" });
-                    }
-                    // Sort by the most recent or oldest creation time in each tag group
-                    const getNewestCtime = (files: TFile[]) => {
-                        if (files.length === 0) return 0;
-                        return mode === "created-time-descending"
-                            ? Math.max(...files.map(f => f.stat.ctime))
-                            : Math.min(...files.map(f => f.stat.ctime));
-                    };
-                    const ctimeA = getNewestCtime(filesA);
-                    const ctimeB = getNewestCtime(filesB);
-                    if (ctimeA === ctimeB) {
-                        return a[0].localeCompare(b[0], undefined, { sensitivity: "base" });
-                    }
-                    return mode === "created-time-descending"
-                        ? ctimeB - ctimeA // newest first
-                        : ctimeA - ctimeB; // oldest first
-                });
-                break;
-                
-            case "modified-time-descending":
-            case "modified-time-ascending":
-                sortedEntries.sort((a, b) => {
-                    const filesA = Array.from(a[1].files);
-                    const filesB = Array.from(b[1].files);
-                    if (filesA.length === 0 && filesB.length === 0) {
-                        return a[0].localeCompare(b[0], undefined, { sensitivity: "base" });
-                    }
-                    // Sort by the most recent or oldest modification time in each tag group
-                    const getNewestMtime = (files: TFile[]) => {
-                        if (files.length === 0) return 0;
-                        return mode === "modified-time-descending"
-                            ? Math.max(...files.map(f => f.stat.mtime))
-                            : Math.min(...files.map(f => f.stat.mtime));
-                    };
-                    const mtimeA = getNewestMtime(filesA);
-                    const mtimeB = getNewestMtime(filesB);
-                    if (mtimeA === mtimeB) {
-                        return a[0].localeCompare(b[0], undefined, { sensitivity: "base" });
-                    }
-                    return mode === "modified-time-descending"
-                        ? mtimeB - mtimeA // recently modified first
-                        : mtimeA - mtimeB; // least recently modified first
-                });
-                break;
-        }
-
-        const result: TagHierarchy = {};
-        for (const [k, v] of sortedEntries) {
-            result[k] = v;
-        }
-        return result;
-    }
-
-    /**
-     * Render the tag hierarchy recursively.
-     */
-    private renderTagGroup(container: HTMLElement, group: TagHierarchy, path: string[] = []) {
-        for (const [key, { files, children }] of Object.entries(group)) {
-            // Single-child collapsing check
-            const shouldCollapse = Object.keys(children).length === 1 && files.size === 0;
-            if (shouldCollapse) {
-                const [nextKey, nextValue] = Object.entries(children)[0];
-                this.renderTagGroup(container, { [`${key}/${nextKey}`]: nextValue }, path);
-                continue;
-            }
-
-            // Create a <details> for this tag
-            const groupContainer = container.createEl("details", { cls: "tag-group" });
-            if (this.expandAll) {
-                groupContainer.setAttribute("open", "true");
-            }
-            const groupHeader = groupContainer.createEl("summary", { cls: "tag-group-header" });
-
-            // Icon
-            const icon = groupHeader.createEl("span", { cls: "tag-group-icon" });
-            setIcon(icon, groupContainer.open ? "chevron-down" : "chevron-right");
-            groupContainer.addEventListener("toggle", () => {
-                setIcon(icon, groupContainer.open ? "chevron-down" : "chevron-right");
-            });
-
-            // Tag name (highlight filter matches here)
-            const tagName = groupHeader.createEl("span");
-            // Insert highlighted HTML instead of plain text:
-            tagName.innerHTML = this.highlightMatches(key, this.filterQuery);
-            // Hover tip
-            tagName.title = path.length !== 0 ? `${path}/${key}` : key;
-
-            // Count
-            const totalCount = this.getTotalFileCountForNode({ files, children });
-            if (totalCount > 0) {
-                const count = groupHeader.createEl("span", {
-                    cls: "tag-group-count",
-                });
-                count.innerText = `${totalCount}`;
-                
-                // Create a more descriptive tooltip
-                const directFileCount = files.size;
-                const childFileCount = totalCount - directFileCount;
-                
-                let tooltipText = `Total notes: ${totalCount}`;
-                if (directFileCount > 0) {
-                    tooltipText += `\nDirect tag matches: ${directFileCount}`;
-                }
-                if (childFileCount > 0) {
-                    tooltipText += `\nNotes in subtags: ${childFileCount}`;
-                }
-                
-                count.title = tooltipText;
-            }
-
-            // Recursively render children
-            this.renderTagGroup(groupContainer, children, [...path, key]);
-
-            // Sort files according to the current sort mode
-            let sortedFiles = Array.from(files);
-            switch (this.sortMode) {
-                case "alphabetically-descending":
-                    sortedFiles.sort((a, b) => 
-                        a.basename.localeCompare(b.basename, undefined, { sensitivity: "base" })
-                    );
-                    break;
-                    
-                case "created-time-descending":
-                    sortedFiles.sort((a, b) => b.stat.ctime - a.stat.ctime);
-                    break;
-                    
-                case "created-time-ascending":
-                    sortedFiles.sort((a, b) => a.stat.ctime - b.stat.ctime);
-                    break;
-                    
-                case "modified-time-descending":
-                    sortedFiles.sort((a, b) => b.stat.mtime - a.stat.mtime);
-                    break;
-                    
-                case "modified-time-ascending":
-                    sortedFiles.sort((a, b) => a.stat.mtime - b.stat.mtime);
-                    break;
-                    
-                // For file-count-descending, just keep the default order
-                // as file count doesn't apply to individual files
-            }
-
-            // Render files
-            const list = groupContainer.createEl("ul", { cls: "tag-group-list" });
-            for (const file of sortedFiles) {
-                const listItem = list.createEl("li", { cls: "tag-group-note" });
-                listItem.title = file.path;
-                const link = listItem.createEl("a", {
-                    cls: "internal-link",
-                    href: `#${file.path}`,
-                });
-                // Insert highlighted basename
-                const nameSpan = link.createEl("span");
-                nameSpan.innerHTML = this.highlightMatches(file.basename, this.filterQuery);
-
-                // Add date/time info based on the sort mode
-                if (this.sortMode.includes("time")) {
-                    const timeSpan = link.createEl("span", { cls: "tag-note-time" });
-                    const date = this.sortMode.includes("created") 
-                        ? new Date(file.stat.ctime) 
-                        : new Date(file.stat.mtime);
-                    
-                    // Format the date for display
-                    timeSpan.innerText = date.toLocaleDateString();
-                    
-                    // More descriptive tooltip
-                    const dateType = this.sortMode.includes("created") ? "Created" : "Modified";
-                    timeSpan.title = `${dateType}: ${date.toLocaleString()}`;
-                }
-
-                link.onclick = (evt) => {
-                    evt.preventDefault();
-                    this.app.workspace.getLeaf().openFile(file);
-                };
-            }
-        }
-    }
-
-    /**
-     * Returns the total number of files for a given node (including children).
-     */
-    private getTotalFileCountForNode(nodeData: { files: Set<TFile>; children: TagHierarchy }): number {
-        let count = nodeData.files.size;
-        for (const child of Object.values(nodeData.children)) {
-            count += this.getTotalFileCountForNode(child);
-        }
-        return count;
-    }
-
-    /**
-     * Helper method to highlight all occurrences of `filter` within `original`,
-     * wrapping them in <span class="highlight">... </span>. (Case-insensitive)
-     */
-    private highlightMatches(original: string, filter: string): string {
-        if (!filter) return original;
-
-        // Escape regex specials in the filter text
-        const escaped = filter.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-        // Build a case-insensitive regex
-        const regex = new RegExp(`(${escaped})`, "gi");
-
-        // Replace all matches with <span class="highlight">$1</span>
-        return original.replace(regex, `<span class="highlight">$1</span>`);
-    }
-
-    /**
-     * Update the sort button icon and tooltip based on current sort mode
-     */
-    private updateSortButtonLabel(buttonEl: HTMLButtonElement) {
-        // Clear button content
-        buttonEl.empty();
+        // Use renderer to build, filter, sort and render the tag hierarchy
+        const tagHierarchy = this.renderer.buildTagHierarchy();
+        const filteredHierarchy = this.renderer.filterHierarchy(tagHierarchy, this.renderer.getFilterQuery());
+        const sortedHierarchy = this.renderer.sortHierarchy(filteredHierarchy, this.renderer.getSortMode());
         
-        // Add icon and label
-        let sortIcon: IconName;
-        let sortLabel: string;
-        
-        switch (this.sortMode) {
-            case "alphabetically-descending":
-                sortIcon = "arrow-down-az";
-                sortLabel = "Alphabetical";
-                buttonEl.setAttribute("aria-label", "Sorting alphabetically");
-                buttonEl.title = "Current sort: Alphabetically\nClick to change sort method";
-                break;
-            case "file-count-descending":
-                sortIcon = "arrow-down-10";
-                sortLabel = "Note Count";
-                buttonEl.setAttribute("aria-label", "Sorting by file count");
-                buttonEl.title = "Current sort: By note count (highest first)\nClick to change sort method";
-                break;
-            case "created-time-descending":
-                sortIcon = "calendar-plus";
-                sortLabel = "Newest First";
-                buttonEl.setAttribute("aria-label", "Sorting by newest notes first");
-                buttonEl.title = "Current sort: By creation date (newest first)\nClick to change sort method";
-                break;
-            case "created-time-ascending":
-                sortIcon = "calendar-minus";
-                sortLabel = "Oldest First";
-                buttonEl.setAttribute("aria-label", "Sorting by oldest notes first");
-                buttonEl.title = "Current sort: By creation date (oldest first)\nClick to change sort method";
-                break;
-            case "modified-time-descending":
-                sortIcon = "pencil";
-                sortLabel = "Recent Edits";
-                buttonEl.setAttribute("aria-label", "Sorting by most recently modified");
-                buttonEl.title = "Current sort: By modification date (most recent first)\nClick to change sort method";
-                break;
-            case "modified-time-ascending":
-                sortIcon = "pencil-line";
-                sortLabel = "Oldest Edits";
-                buttonEl.setAttribute("aria-label", "Sorting by least recently modified");
-                buttonEl.title = "Current sort: By modification date (oldest first)\nClick to change sort method";
-                break;
-        }
-        
-        // Add icon
-        const iconSpan = buttonEl.createSpan();
-        setIcon(iconSpan, sortIcon);
-        
-        // Add label
-        const labelSpan = buttonEl.createSpan({
-            text: sortLabel,
-            cls: "sort-btn-label"
+        // Render using the renderer
+        this.renderer.renderTagGroup(this.listContainerEl, sortedHierarchy, [], (file) => {
+            // Handle file opening
+            this.app.workspace.getLeaf().openFile(file);
         });
     }
-
-    private updateExpandButtonLabel(buttonEl: HTMLButtonElement) {
-        if (this.expandAll) {
-            setIcon(buttonEl, "chevrons-down-up");
-            buttonEl.setAttribute("aria-label", "Collapse all tags");
-            buttonEl.title = "Currently showing expanded tags\nClick to collapse all tag groups";
-        } else {
-            setIcon(buttonEl, "chevrons-up-down");
-            buttonEl.setAttribute("aria-label", "Expand all tags");
-            buttonEl.title = "Currently showing collapsed tags\nClick to expand all tag groups";
-        }
-    }
-}
-
-/**
- * Represents the structure of the tag hierarchy.
- */
-interface TagHierarchy {
-    [key: string]: {
-        files: Set<TFile>;
-        children: TagHierarchy;
-    };
 }
