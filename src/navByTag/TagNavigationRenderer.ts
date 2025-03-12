@@ -286,13 +286,10 @@ export class TagNavigationRenderer {
             // If the tag name itself matches, or some file names match, or children matched
             if (tagNameMatches || matchingFiles.size > 0 || Object.keys(filteredChildren).length > 0) {
                 result[key] = {
-                    files: new Set([...matchingFiles]),
+                    // If tag name matches, show ALL files, otherwise only show matching files
+                    files: tagNameMatches ? new Set([...files]) : new Set([...matchingFiles]),
                     children: filteredChildren,
                 };
-                // If tagNameMatches but no direct file matches, keep original files
-                if (tagNameMatches && matchingFiles.size === 0 && files.size > 0) {
-                    result[key].files = new Set([...files]);
-                }
             }
         }
 
