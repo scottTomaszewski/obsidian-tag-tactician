@@ -217,6 +217,50 @@ export class TagNavigationRenderer {
     }
 
     /**
+     * Create a filter input with a clear button
+     */
+    public createFilterInput(container: HTMLElement, initialValue: string, placeholder: string, onChange: (value: string) => void): HTMLInputElement {
+        const filterWrapper = container.createEl("div", { cls: "filter-input-container" });
+        
+        // Create the text input
+        const filterInput = filterWrapper.createEl("input", {
+            type: "search",
+            placeholder: placeholder,
+            cls: "filter-input",
+        });
+        filterInput.value = initialValue;
+        
+        // Create the clear button
+        const clearButton = filterWrapper.createEl("span", { 
+            cls: "search-input-clear-button", 
+            attr: { 
+                "aria-label": "Clear filter" 
+            }
+        });
+        
+        // Hide clear button when empty
+        clearButton.style.display = initialValue ? "flex" : "none";
+        
+        // Setup event handlers
+        filterInput.oninput = () => {
+            const value = filterInput.value.trim();
+            clearButton.style.display = value ? "flex" : "none";
+            onChange(value);
+        };
+        
+        clearButton.onclick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            filterInput.value = "";
+            clearButton.style.display = "none";
+            onChange("");
+            filterInput.focus();
+        };
+        
+        return filterInput;
+    }
+
+    /**
      * Build a hierarchical structure of tags and their associated notes.
      */
     public buildTagHierarchy(): TagHierarchy {

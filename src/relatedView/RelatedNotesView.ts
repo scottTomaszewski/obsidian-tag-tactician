@@ -16,10 +16,10 @@ export class RelatedNotesView extends ItemView {
     /** User-entered filter text for live filtering notes. */
     private filterQuery: string = "";
 
-    /** Whether to show each note’s tags under its title. */
+    /** Whether to show each note's tags under its title. */
     private showTags: boolean;
 
-    /** Whether to show each note’s score next to it. */
+    /** Whether to show each note's score next to it. */
     private showScore: boolean;
 
     constructor(leaf: WorkspaceLeaf, plugin: TagTacticianPlugin) {
@@ -108,18 +108,44 @@ export class RelatedNotesView extends ItemView {
             menu.showAtMouseEvent(evt);
         };
 
-        // Filter input
+        // Filter input with clear button
         const controls = header.createEl("div", { cls: "related-notes-controls" });
-        const filterInput = controls.createEl("input", {
+        const filterWrapper = controls.createEl("div", { cls: "filter-input-container" });
+        
+        // Create the text input
+        const filterInput = filterWrapper.createEl("input", {
             type: "search",
             placeholder: "Filter by name or tag...",
             cls: "filter-input",
         });
         filterInput.value = this.filterQuery;
-        filterInput.style.minWidth = "120px";
+        
+        // Create the clear button
+        const clearButton = filterWrapper.createEl("span", { 
+            cls: "search-input-clear-button", 
+            attr: { 
+                "aria-label": "Clear filter" 
+            }
+        });
+        
+        // Hide clear button when empty
+        clearButton.style.display = this.filterQuery ? "flex" : "none";
+        
+        // Setup event handlers
         filterInput.oninput = () => {
             this.filterQuery = filterInput.value.trim().toLowerCase();
-            this.refreshList(); // re-render note list only
+            clearButton.style.display = this.filterQuery ? "flex" : "none";
+            this.refreshList();
+        };
+        
+        clearButton.onclick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            filterInput.value = "";
+            this.filterQuery = "";
+            clearButton.style.display = "none";
+            this.refreshList();
+            filterInput.focus();
         };
 
         // Container for the note list
@@ -166,22 +192,24 @@ export class RelatedNotesView extends ItemView {
         for (const { notePath, score } of topResults) {
             const noteFile = this.app.vault.getAbstractFileByPath(notePath);
             const item = container.createEl("div", { cls: "related-note-item" });
-
-            // Score (conditionally displayed)
-            if (this.showScore) {
-                const scoreEl = item.createEl("span", { cls: "related-note-score" });
-                scoreEl.setText(`${score.toPrecision(2)}`);
-                scoreEl.title = "Score: " + score;
-            }
-
             const itemContent = item.createEl("div", { cls: "related-note-item-content" });
+
+            // Title row with title and score on the same line
+            const titleRow = itemContent.createEl("div", { cls: "related-note-title-row" });
 
             // Title link
             const noteTitle = notePath.split(/[\\/]/).pop();
-            const link = itemContent.createEl("a", {cls: "related-note-link"});
+            const link = titleRow.createEl("a", {cls: "related-note-link"});
 
             // Instead of using `setText`, we highlight the filter matches in the title
             link.innerHTML = this.highlightMatches(noteTitle, this.filterQuery);
+
+            // Score (conditionally displayed) - now part of the title row
+            if (this.showScore) {
+                const scoreEl = titleRow.createEl("span", { cls: "related-note-score" });
+                scoreEl.setText(`${score.toPrecision(2)}`);
+                scoreEl.title = "Score: " + score;
+            }
 
             // tooltip
             link.title = notePath;
@@ -209,11 +237,14 @@ export class RelatedNotesView extends ItemView {
                 }
             });
 
-            // Middle-click => open in new tab
+            // Middle-click => open in new tab without switching to it
             link.addEventListener("auxclick", (evt) => {
                 evt.preventDefault();
                 evt.stopPropagation();
-                this.app.workspace.openLinkText(notePath, "", true);
+                if (noteFile instanceof TFile) {
+                    // Create a new leaf without focusing it
+                    this.app.workspace.openLinkText(notePath, "", true, { active: false, eState: {focus:false}});
+                }
             });
 
             // Optionally show tags

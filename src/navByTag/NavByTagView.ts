@@ -88,18 +88,17 @@ export class NavByTagView extends ItemView {
             this.renderList();
         };
 
-        // Filter input
-        const filterInput = header.createEl("input", {
-            type: "search",
-            placeholder: "Filter tags...",
-            cls: "tag-nav-filter-input",
-        });
-        filterInput.value = this.filterQuery;
-        filterInput.oninput = () => {
-            this.filterQuery = filterInput.value.trim().toLowerCase();
-            this.renderer.setFilterQuery(this.filterQuery);
-            this.renderList();
-        };
+        // Filter input with clear button
+        this.renderer.createFilterInput(
+            header, 
+            this.filterQuery, 
+            "Filter tags...", 
+            (value) => {
+                this.filterQuery = value.toLowerCase();
+                this.renderer.setFilterQuery(this.filterQuery);
+                this.renderList();
+            }
+        );
 
         // Create the list container
         this.listContainerEl = container.createEl("div", { cls: "tag-navigation-list-container" });
