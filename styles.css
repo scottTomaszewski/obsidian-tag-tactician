@@ -45,6 +45,13 @@
     color: var(--text-error);
 }
 
+.tt-bulk-tag-modal .add-tags-container,
+.tt-bulk-tag-modal .remove-tags-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
 /* Table container and structure */
 .tt-bulk-tag-modal .bulk-tag-table-container {
     display: table;
@@ -76,9 +83,11 @@
 
 /* Column styles */
 .tt-bulk-tag-modal .cb-col {
+    display: table-cell
     width: 24px;
     text-align: center;
-    padding: 0 !important;
+    padding: 8px;
+    vertical-align: middle;
 }
 
 .tt-bulk-tag-modal .file-name-col {
@@ -346,4 +355,27 @@
 
 .tag-navigation-container .tag-group:first-of-type .tag-group-header {
     margin-top: 0;
+}
+
+/* Styles for tag suggestions */
+.suggestion-container {
+    position: absolute;
+    z-index: 1000;
+    background-color: var(--background-primary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+    box-shadow: 0 2px 8px var(--background-modifier-box-shadow);
+    max-height: 200px;
+    overflow-y: auto;
+    width: 100%;
+}
+
+.suggestion-item {
+    padding: 6px 10px;
+    cursor: pointer;
+}
+
+.suggestion-item:hover,
+.suggestion-item.is-selected {
+    background-color: var(--background-secondary);
 }

@@ -7,9 +7,10 @@ import {
     Notice, parseFrontMatterTags,
 } from "obsidian";
 import * as yaml from "js-yaml";
+import { ExistingTagSuggest, FileTagSuggest } from './TagSuggest';
 
 /**
- * Basic data about a file’s tags (current & proposed).
+ * Basic data about a file's tags (current & proposed).
  */
 interface FileTagData {
     file: TFile;
@@ -23,8 +24,8 @@ interface FileTagData {
  * so we can update checkboxes and proposed-tag spans without casting.
  */
 interface RenderableFileTagData extends FileTagData {
-    checkboxEl?: HTMLInputElement;  // the file’s “Accept/Reject” checkbox
-    proposedEl?: HTMLSpanElement;   // the span showing the file’s updated tags
+    checkboxEl?: HTMLInputElement;  // the file's "Accept/Reject" checkbox
+    proposedEl?: HTMLSpanElement;   // the span showing the file's updated tags
 }
 
 /**
@@ -37,16 +38,21 @@ export class EditTagsModal extends Modal {
     private invalidYamlFiles: TAbstractFile[] = [];
 
     /**
-     * The user’s callback, receiving an array of { file, finalTags } after the user applies changes.
+     * The user's callback, receiving an array of { file, finalTags } after the user applies changes.
      */
     onSubmit: (filesToUpdate: { file: TFile; finalTags: string[] }[]) => void;
 
-    // The user’s add/remove arrays, extracted from text inputs
+    // The user's add/remove arrays, extracted from text inputs
     private tagsToAdd: string[] = [];
     private tagsToRemove: string[] = [];
 
-    // Holds each file’s current + proposed tags, along with references to UI elements
+    // Holds each file's current + proposed tags, along with references to UI elements
     private fileTagData: RenderableFileTagData[] = [];
+
+    private addTagsInput: HTMLInputElement;
+    private removeTagsInput: HTMLInputElement;
+    private addTagSuggest: ExistingTagSuggest;
+    private removeTagSuggest: FileTagSuggest;
 
     constructor(
         app: App,
@@ -59,7 +65,7 @@ export class EditTagsModal extends Modal {
         this.mdFiles = files.filter(
             (f): f is TFile => f instanceof TFile && f.extension === "md"
         );
-        // The rest are “non-markdown” (folders or other extensions)
+        // The rest are "non-markdown" (folders or other extensions)
         this.nonMarkdownFiles = files.filter(
             (f) => !(f instanceof TFile && f.extension === "md")
         );
@@ -102,25 +108,34 @@ export class EditTagsModal extends Modal {
         }
 
         // 3) Render the top input fields for "tags to add" / "tags to remove"
-        new Setting(contentEl)
-            .setName("Tags to add (comma or space separated)")
-            .addText((text) => {
-                text.setPlaceholder("foo, bar/1");
-                text.onChange((val) => {
-                    this.tagsToAdd = parseTagInput(val);
-                    this.updateProposedTags();
-                });
-            });
-
-        new Setting(contentEl)
-            .setName("Tags to remove (comma or space separated)")
-            .addText((text) => {
-                text.setPlaceholder("bar/2, oldTag");
-                text.onChange((val) => {
-                    this.tagsToRemove = parseTagInput(val);
-                    this.updateProposedTags();
-                });
-            });
+        const addTagsContainer = contentEl.createDiv({cls: 'add-tags-container'});
+        addTagsContainer.createEl('p', { text: 'Tags to add to files, separated by commas.' });
+        this.addTagsInput = addTagsContainer.createEl('input', {
+            type: 'text',
+            placeholder: 'Tags to add (comma separated)'
+        });
+        
+        const removeTagsContainer = contentEl.createDiv({cls: 'remove-tags-container'});
+        removeTagsContainer.createEl('p', { text: 'Tags to remove from files, separated by commas.' });
+        this.removeTagsInput = removeTagsContainer.createEl('input', {
+            type: 'text',
+            placeholder: 'Tags to remove (comma separated)'
+        });
+        
+        // Initialize tag suggestions
+        this.addTagSuggest = new ExistingTagSuggest(this.app, this.addTagsInput);
+        this.removeTagSuggest = new FileTagSuggest(this.app, this.removeTagsInput, this.mdFiles);
+        
+        // Add event listeners to update proposed tags when input changes
+        this.addTagsInput!.addEventListener('input', () => {
+            this.tagsToAdd = this.parseTagInput(this.addTagsInput!.value);
+            this.updateProposedTags();
+        });
+        
+        this.removeTagsInput!.addEventListener('input', () => {
+            this.tagsToRemove = this.parseTagInput(this.removeTagsInput!.value);
+            this.updateProposedTags();
+        });
 
         // 4) Add "Select All" / "Deselect All" buttons
         new Setting(contentEl)
@@ -180,30 +195,15 @@ export class EditTagsModal extends Modal {
         }
 
         // 7) Confirm button at the bottom
-        new Setting(contentEl)
-            .addButton((btn) =>
-                btn
-                    .setButtonText("Apply changes")
-                    .setCta()
-                    .onClick(() => {
-                        // Gather the final set of files that are accepted
-                        const updates = this.fileTagData
-                            .filter((td) => td.accepted)
-                            .map((td) => ({
-                                file: td.file,
-                                finalTags: td.proposedTags,
-                            }));
-
-                        if (updates.length === 0) {
-                            new Notice("No files selected for update.");
-                            this.close();
-                            return;
-                        }
-
-                        this.close();
-                        this.onSubmit(updates);
-                    })
-            );
+        const buttonContainer = contentEl.createDiv({ cls: 'modal-button-container' });
+        buttonContainer.createEl('button', {
+            text: 'Apply Changes',
+            cls: 'mod-cta'
+        }).addEventListener('click', () => this.applyChanges());
+        
+        buttonContainer.createEl('button', {
+            text: 'Cancel'
+        }).addEventListener('click', () => this.close());
     }
 
     onClose() {
@@ -272,7 +272,7 @@ export class EditTagsModal extends Modal {
 
     /**
      * Recalculates the proposedTags for each file after user modifies
-     * “tags to add” or “tags to remove.” Also updates the UI text.
+     * "tags to add" or "tags to remove." Also updates the UI text.
      */
     private updateProposedTags() {
         for (const tagData of this.fileTagData) {
@@ -295,13 +295,13 @@ export class EditTagsModal extends Modal {
             tagData.proposedTags = newTagSet;
 
             // Update the UI if we have a reference
-            if (tagData.proposedEl) {
+            if (tagData.proposedEl !== undefined) {
                 // Clear old tags
                 tagData.proposedEl.empty();
 
                 // Rebuild each tag as a disabled <a> element
                 newTagSet.forEach((t) => {
-                    tagData.proposedEl.createEl("a", {
+                    tagData.proposedEl?.createEl("a", {
                         cls: "tag",
                         text: t,
                         attr: { disabled: true },
@@ -309,6 +309,36 @@ export class EditTagsModal extends Modal {
                 });
             }
         }
+    }
+
+    applyChanges() {
+        // Parse the inputs to get the latest values
+        this.tagsToAdd = this.parseTagInput(this.addTagsInput!.value);
+        this.tagsToRemove = this.parseTagInput(this.removeTagsInput!.value);
+        
+        // Update the proposed tags one last time
+        this.updateProposedTags();
+        
+        // Gather the final set of files that are accepted
+        const updates = this.fileTagData
+            .filter((td) => td.accepted)
+            .map((td) => ({
+                file: td.file,
+                finalTags: td.proposedTags,
+            }));
+
+        if (updates.length === 0) {
+            new Notice("No files selected for update.");
+            this.close();
+            return;
+        }
+
+        this.close();
+        this.onSubmit(updates);
+    }
+
+    private parseTagInput(input: string): string[] {
+        return input.split(/[,\s]+/).filter(tag => tag.trim().length > 0).map(tag => tag.trim());
     }
 }
 
