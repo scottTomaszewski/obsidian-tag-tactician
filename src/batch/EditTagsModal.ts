@@ -108,35 +108,30 @@ export class EditTagsModal extends Modal {
         }
 
         // 3) Render the top input fields for "tags to add" / "tags to remove"
-        const addTagsContainer = contentEl.createDiv({cls: 'add-tags-container'});
-        addTagsContainer.createEl('p', { text: 'Tags to add to files, separated by commas.' });
-        this.addTagsInput = addTagsContainer.createEl('input', {
-            type: 'text',
-            placeholder: 'Tags to add (comma separated)'
-        });
-        
-        const removeTagsContainer = contentEl.createDiv({cls: 'remove-tags-container'});
-        removeTagsContainer.createEl('p', { text: 'Tags to remove from files, separated by commas.' });
-        this.removeTagsInput = removeTagsContainer.createEl('input', {
-            type: 'text',
-            placeholder: 'Tags to remove (comma separated)'
-        });
-        
-        // Initialize tag suggestions
-        this.addTagSuggest = new ExistingTagSuggest(this.app, this.addTagsInput);
-        this.removeTagSuggest = new FileTagSuggest(this.app, this.removeTagsInput, this.mdFiles);
-        
-        // Add event listeners to update proposed tags when input changes
-        this.addTagsInput!.addEventListener('input', () => {
-            this.tagsToAdd = this.parseTagInput(this.addTagsInput!.value);
-            this.updateProposedTags();
-        });
-        
-        this.removeTagsInput!.addEventListener('input', () => {
-            this.tagsToRemove = this.parseTagInput(this.removeTagsInput!.value);
-            this.updateProposedTags();
-        });
+        new Setting(contentEl)
+            .setName("Add Tags")
+            .setDesc("Tags to add to files, separated by commas.")
+            .addText(input => {
+                input.setPlaceholder("Tags to add (comma separated)")
+                .onChange(async (value) => {
+                    this.tagsToAdd = this.parseTagInput(value);
+                    this.updateProposedTags();
+                });
+                new ExistingTagSuggest(this.app, input.inputEl);
+            });
 
+        new Setting(contentEl)
+            .setName("Remove Tags")
+            .setDesc("Tags to remove from files, separated by commas.")
+            .addText(input => {
+                input.setPlaceholder("Tags to remove (comma separated)")
+                .onChange(async (value) => {
+                    this.tagsToRemove = this.parseTagInput(value);
+                    this.updateProposedTags();
+                });
+                new FileTagSuggest(this.app, input.inputEl, this.mdFiles);
+            });
+        
         // 4) Add "Select All" / "Deselect All" buttons
         new Setting(contentEl)
             .setName("File selection")
@@ -312,12 +307,7 @@ export class EditTagsModal extends Modal {
     }
 
     applyChanges() {
-        // Parse the inputs to get the latest values
-        this.tagsToAdd = this.parseTagInput(this.addTagsInput!.value);
-        this.tagsToRemove = this.parseTagInput(this.removeTagsInput!.value);
-        
-        // Update the proposed tags one last time
-        this.updateProposedTags();
+
         
         // Gather the final set of files that are accepted
         const updates = this.fileTagData
