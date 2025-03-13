@@ -1,6 +1,8 @@
 import { AbstractInputSuggest, App, parseFrontMatterTags, renderResults, TFile } from "obsidian";
 
+
 // Base class for tag suggestions
+// Inspired by https://github.com/RyotaUshio/obsidian-pdf-plus/blob/b2467a3d47ceda06c7d14b34e251fb5f9578b5d9/src/utils/suggest.ts#L19
 export abstract class TagSuggestBase extends AbstractInputSuggest<string> {
     protected inputEl: HTMLInputElement;
     protected onTagSelected: ((value: string) => void) | null = null;

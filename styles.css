@@ -130,10 +130,6 @@
     padding: 10px;
 }
 
-.related-notes-container .related-notes-header {
-    margin-bottom: 12px;
-}
-
 .related-notes-container .related-notes-title-row {
     display: flex;
     justify-content: space-between;
@@ -204,10 +200,6 @@
  * ============================================= */
 .tag-navigation-container {
     padding: 10px;
-}
-
-.tag-navigation-container .tag-navigation-header {
-    margin-bottom: 12px;
 }
 
 .tag-navigation-container .tag-navigation-title-row {

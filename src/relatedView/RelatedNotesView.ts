@@ -1,6 +1,6 @@
 import {ItemView, WorkspaceLeaf, TFile, Menu, setIcon, IconName} from "obsidian";
 import TagTacticianPlugin from "../../main";
-import {gatherTagsFromCache} from "./TagIndexer";
+import {gatherTagsFromCache, gatherAllPrefixSegmentsForNote, levenshteinSimilarity} from "./TagIndexer";
 
 /**
  * Unique ID for the related notes view (shared with main.ts).
@@ -208,7 +208,81 @@ export class RelatedNotesView extends ItemView {
             if (this.showScore) {
                 const scoreEl = titleRow.createEl("span", { cls: "related-note-score" });
                 scoreEl.setText(`${score.toPrecision(2)}`);
-                scoreEl.title = "Score: " + score;
+                
+                // Get detailed score calculation
+                if (noteFile instanceof TFile) {
+                    const currentFile = this.app.workspace.getActiveFile();
+                    if (currentFile) {
+                        const currFullTags = gatherTagsFromCache(this.app.metadataCache.getFileCache(currentFile));
+                        const currSegments = gatherAllPrefixSegmentsForNote(currFullTags);
+                        
+                        const candTags = gatherTagsFromCache(this.app.metadataCache.getFileCache(noteFile));
+                        const candSegments = gatherAllPrefixSegmentsForNote(candTags);
+                        
+                        // Calculate tag overlap
+                        let prefixOverlapScore = 0;
+                        const overlappingTags: string[] = [];
+                        for (const seg of candSegments) {
+                            if (currSegments.has(seg)) {
+                                prefixOverlapScore += 1;
+                                overlappingTags.push(seg);
+                            }
+                        }
+                        
+                        // Get titles for title similarity calculation
+                        const currentTitle = currentFile.basename.toLowerCase();
+                        const candidateTitle = noteFile.basename.toLowerCase();
+                        const titleSimScore = levenshteinSimilarity(currentTitle, candidateTitle);
+                        
+                        // Path similarity
+                        let pathSimScore = 0;
+                        if (noteFile.parent.path !== "/" && currentFile.parent.path !== "/") {
+                            pathSimScore = levenshteinSimilarity(currentFile.path, notePath);
+                        }
+                        
+                        // Links to each other
+                        let linkScore = 0;
+                        const candCache = this.app.metadataCache.getFileCache(noteFile);
+                        const currCache = this.app.metadataCache.getFileCache(currentFile);
+                        
+                        if (candCache && currCache) {
+                            if (candCache.links?.map(l => l.link).includes(currentFile.basename)) {
+                                linkScore++;
+                            }
+                            if (currCache.links?.map(l => l.link).includes(noteFile.basename)) {
+                                linkScore++;
+                            }
+                        }
+                        
+                        // Calculate weighted scores
+                        const tagWeight = this.plugin.settings.weightTagSimilarity;
+                        const titleWeight = this.plugin.settings.weightTitleSimilarity;
+                        const pathWeight = this.plugin.settings.weightPathSimilarity;
+                        const linkWeight = this.plugin.settings.weightLinkInterconnections;
+                        
+                        const weightedTagScore = tagWeight * prefixOverlapScore;
+                        const weightedTitleScore = titleWeight * titleSimScore;
+                        const weightedPathScore = pathWeight * pathSimScore;
+                        const weightedLinkScore = linkWeight * linkScore;
+                        
+                        // Create tooltip text
+                        let tooltipText = "Score Breakdown:\n";
+                        tooltipText += `• Tag similarity: ${weightedTagScore.toFixed(2)} (${prefixOverlapScore} tag overlaps × ${tagWeight} weight)\n`;
+                        if (overlappingTags.length > 0) {
+                            tooltipText += `  Overlapping tags: ${overlappingTags.join(", ")}\n`;
+                        }
+                        tooltipText += `• Title similarity: ${weightedTitleScore.toFixed(2)} (${titleSimScore.toFixed(2)} similarity × ${titleWeight} weight)\n`;
+                        tooltipText += `• Path similarity: ${weightedPathScore.toFixed(2)} (${pathSimScore.toFixed(2)} similarity × ${pathWeight} weight)\n`;
+                        tooltipText += `• Link interconnections: ${weightedLinkScore.toFixed(2)} (${linkScore} links × ${linkWeight} weight)\n`;
+                        tooltipText += `\nTotal score: ${score.toPrecision(3)}`;
+                        
+                        scoreEl.title = tooltipText;
+                    } else {
+                        scoreEl.title = "Score: " + score;
+                    }
+                } else {
+                    scoreEl.title = "Score: " + score;
+                }
             }
 
             // tooltip

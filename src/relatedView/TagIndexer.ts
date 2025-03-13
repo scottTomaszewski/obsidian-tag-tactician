@@ -153,7 +153,7 @@ export class TagIndexer {
 }
 
 /**
- * Helper: gather full tags from a file's cache + fallback to file basename if no frontmatter
+ * Utility function to collect tags from metadata cache
  */
 export function gatherTagsFromCache(cache: CachedMetadata): Set<string> {
     const tags: Set<string> = new Set();
@@ -176,7 +176,8 @@ export function gatherTagsFromCache(cache: CachedMetadata): Set<string> {
 }
 
 /**
- * Expand "person/family/child" => ["person", "person/family", "person/family/child"].
+ * Given a full tag like "programming/python/django", return
+ * ["programming", "programming/python", "programming/python/django"]
  */
 function expandTagIntoPrefixes(fullTag: string): string[] {
     const segments = fullTag.split("/");
@@ -188,11 +189,9 @@ function expandTagIntoPrefixes(fullTag: string): string[] {
 }
 
 /**
- * For a note's set of full tags, build a set of all prefix segments.
- * e.g. if note has ["person/family", "career/company_name"],
- * returns ["person", "person/family", "career", "career/company_name"].
+ * Get all tag prefix segments from a note
  */
-function gatherAllPrefixSegmentsForNote(noteTags: Set<string>): Set<string> {
+export function gatherAllPrefixSegmentsForNote(noteTags: Set<string>): Set<string> {
     const allSegments = new Set<string>();
     for (const tag of noteTags) {
         for (const prefix of expandTagIntoPrefixes(tag)) {
@@ -202,8 +201,9 @@ function gatherAllPrefixSegmentsForNote(noteTags: Set<string>): Set<string> {
     return allSegments;
 }
 
-// This algorithm calculates the number of edits (insertions, deletions, or substitutions) required to transform
-// one string into another. Good for measuring the difference between two strings.
+/**
+ * Calculate the Levenshtein distance between two strings
+ */
 function levenshteinDistance(str1: string, str2: string): number {
     const m = str1.length;
     const n = str2.length;
@@ -232,8 +232,10 @@ function levenshteinDistance(str1: string, str2: string): number {
     return dp[m][n];
 }
 
-// See levenshteinDistance, but this normalizes it
-function levenshteinSimilarity(s1: string, s2: string): number {
+/**
+ * Calculate a similarity score between two strings based on Levenshtein distance
+ */
+export function levenshteinSimilarity(s1: string, s2: string): number {
     var longer = s1;
     var shorter = s2;
     if (s1.length < s2.length) {
