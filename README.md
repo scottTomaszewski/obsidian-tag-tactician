@@ -4,6 +4,11 @@ Tag Tactician is an Obsidian plugin that makes it easy to bulk edit the frontmat
 You can add or remove tags across many files, preview proposed changes, and selectively apply updates to individual 
 notes—all without leaving Obsidian.
 
+Additionally, Tag Tactician comes with a "Related Notes" View to display notes that have similarities to the current
+active note.  Notes are determined to be related based on similarity of tags, filename, links, and more.
+
+Tag Tactician also has a "Tag Navigation" view to display your notes in a hierarchy format organized by their tags.
+
 ## Installation (from obsidian)
 
 1. Open Settings > Community Plugins.
