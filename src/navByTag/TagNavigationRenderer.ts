@@ -13,6 +13,15 @@ export interface TagHierarchy {
 }
 
 /**
+ * Represents the filter mode for tag navigation.
+ */
+export enum TagFilterMode {
+    TagsAndFiles = "tags-and-files",
+    TagsOnly = "tags-only",
+    FilesOnly = "files-only"
+}
+
+/**
  * Handles the rendering and sorting logic for tag navigation
  */
 export class TagNavigationRenderer {
@@ -20,6 +29,7 @@ export class TagNavigationRenderer {
     private filterQuery: string = "";
     private expandAll: boolean = false;
     private sortMode: TagNavSortMode;
+    private filterMode: TagFilterMode = TagFilterMode.TagsAndFiles; // Default to tags and files
 
     /**
      * Create a new tag navigation renderer
@@ -72,6 +82,20 @@ export class TagNavigationRenderer {
     }
 
     /**
+     * Set the current filter mode
+     */
+    public setFilterMode(mode: TagFilterMode): void {
+        this.filterMode = mode;
+    }
+
+    /**
+     * Get the current filter mode
+     */
+    public getFilterMode(): TagFilterMode {
+        return this.filterMode;
+    }
+
+    /**
      * Render the sort button with current mode
      */
     public renderSortButton(buttonEl: HTMLButtonElement): void {
@@ -80,43 +104,36 @@ export class TagNavigationRenderer {
         
         // Add icon and label
         let sortIcon: IconName;
-        let sortLabel: string;
         
         switch (this.sortMode) {
             case "alphabetically-descending":
                 sortIcon = "arrow-down-az";
-                sortLabel = "Alphabetical";
-                buttonEl.setAttribute("aria-label", "Sorting alphabetically");
-                buttonEl.title = "Current sort: Alphabetically\nClick to change sort method";
+                buttonEl.setAttribute("aria-label", "Sort alphabetically (A-Z)");
+                buttonEl.title = "Current sort: Alphabetical (A-Z)\nClick to change sort method";
                 break;
             case "file-count-descending":
                 sortIcon = "arrow-down-10";
-                sortLabel = "Note Count";
-                buttonEl.setAttribute("aria-label", "Sorting by file count");
+                buttonEl.setAttribute("aria-label", "Sort by note count (descending)");
                 buttonEl.title = "Current sort: By note count (highest first)\nClick to change sort method";
                 break;
             case "created-time-descending":
                 sortIcon = "calendar-plus";
-                sortLabel = "Newest First";
-                buttonEl.setAttribute("aria-label", "Sorting by newest notes first");
+                buttonEl.setAttribute("aria-label", "Sort by creation date (newest first)");
                 buttonEl.title = "Current sort: By creation date (newest first)\nClick to change sort method";
                 break;
             case "created-time-ascending":
                 sortIcon = "calendar-minus";
-                sortLabel = "Oldest First";
-                buttonEl.setAttribute("aria-label", "Sorting by oldest notes first");
+                buttonEl.setAttribute("aria-label", "Sort by creation date (oldest first)");
                 buttonEl.title = "Current sort: By creation date (oldest first)\nClick to change sort method";
                 break;
             case "modified-time-descending":
                 sortIcon = "pencil";
-                sortLabel = "Recent Edits";
-                buttonEl.setAttribute("aria-label", "Sorting by most recently modified");
+                buttonEl.setAttribute("aria-label", "Sort by modification date (most recent first)");
                 buttonEl.title = "Current sort: By modification date (most recent first)\nClick to change sort method";
                 break;
             case "modified-time-ascending":
                 sortIcon = "pencil-line";
-                sortLabel = "Oldest Edits";
-                buttonEl.setAttribute("aria-label", "Sorting by least recently modified");
+                buttonEl.setAttribute("aria-label", "Sort by modification date (oldest first)");
                 buttonEl.title = "Current sort: By modification date (oldest first)\nClick to change sort method";
                 break;
         }
@@ -124,12 +141,6 @@ export class TagNavigationRenderer {
         // Add icon
         const iconSpan = buttonEl.createSpan();
         setIcon(iconSpan, sortIcon);
-        
-        // Add label
-        const labelSpan = buttonEl.createSpan({
-            text: sortLabel,
-            cls: "sort-btn-label"
-        });
     }
 
     /**
@@ -317,23 +328,65 @@ export class TagNavigationRenderer {
         if (!filterQuery) return hierarchy;
 
         const result: TagHierarchy = {};
+        const normalizedFilterQuery = filterQuery.toLowerCase();
 
         for (const [key, { files, children }] of Object.entries(hierarchy)) {
-            const tagNameMatches = key.toLowerCase().includes(filterQuery);
+            const tagNameMatches = key.toLowerCase().includes(normalizedFilterQuery);
             const matchingFiles = new Set(
                 [...files].filter((file) =>
-                    file.basename.toLowerCase().includes(filterQuery)
+                    file.basename.toLowerCase().includes(normalizedFilterQuery)
                 )
             );
-            const filteredChildren = this.filterHierarchy(children, filterQuery);
+            const filteredChildren = this.filterHierarchy(children, filterQuery); // Pass original filterQuery for recursion
 
-            // If the tag name itself matches, or some file names match, or children matched
-            if (tagNameMatches || matchingFiles.size > 0 || Object.keys(filteredChildren).length > 0) {
-                result[key] = {
-                    // If tag name matches, show ALL files, otherwise only show matching files
-                    files: tagNameMatches ? new Set([...files]) : new Set([...matchingFiles]),
-                    children: filteredChildren,
-                };
+            let includeNode = false;
+            let filesToShow = new Set<TFile>();
+
+            switch (this.filterMode) {
+                case TagFilterMode.TagsAndFiles:
+                    if (tagNameMatches || matchingFiles.size > 0 || Object.keys(filteredChildren).length > 0) {
+                        includeNode = true;
+                        // If tag name matches, show ALL files, otherwise only show matching files
+                        filesToShow = tagNameMatches ? new Set([...files]) : new Set([...matchingFiles]);
+                    }
+                    break;
+                case TagFilterMode.TagsOnly:
+                    if (tagNameMatches || Object.keys(filteredChildren).length > 0) {
+                        includeNode = true;
+                        // Show all files if the tag or its children match, as we are not filtering by filename here
+                        filesToShow = new Set([...files]); 
+                    }
+                    break;
+                case TagFilterMode.FilesOnly:
+                    if (matchingFiles.size > 0 || Object.keys(filteredChildren).length > 0) {
+                        includeNode = true;
+                        // Only show files that match the query
+                        filesToShow = new Set([...matchingFiles]);
+                    }
+                    break;
+            }
+
+            if (includeNode) {
+                // If the node is included but all its direct files are filtered out by FilesOnly mode,
+                // and children are also empty, we might still want to show the tag if its name matched previously.
+                // However, the current logic for FilesOnly means if no files match, the tag itself isn't shown unless children match.
+                // This needs careful consideration if the behavior should be different.
+                // For now, if filesToShow is empty due to FilesOnly filtering, but children exist, it's fine.
+                // If filesToShow is empty and no children, the node won't be added unless tagNameMatches was true in a mode that cares.
+
+                // Special handling for FilesOnly: if a parent tag doesn't match but a child tag has matching files,
+                // the parent tag structure should still be created.
+                if (this.filterMode === TagFilterMode.FilesOnly && !tagNameMatches && matchingFiles.size === 0 && Object.keys(filteredChildren).length > 0) {
+                     result[key] = {
+                        files: new Set<TFile>(), // No direct matching files for this parent, but children have them
+                        children: filteredChildren,
+                    };
+                } else if (includeNode) {
+                     result[key] = {
+                        files: filesToShow,
+                        children: filteredChildren,
+                    };
+                }
             }
         }
 
@@ -466,7 +519,11 @@ export class TagNavigationRenderer {
             // Tag name (highlight filter matches here)
             const tagName = groupHeader.createEl("span");
             // Insert highlighted HTML instead of plain text:
-            tagName.innerHTML = this.highlightMatches(key, this.filterQuery);
+            if (this.filterMode === TagFilterMode.FilesOnly) {
+                tagName.textContent = key; // No highlighting for tag names in FilesOnly mode
+            } else {
+                tagName.innerHTML = this.highlightMatches(key, this.filterQuery);
+            }
             // Hover tip
             tagName.title = path.length !== 0 ? `${path}/${key}` : key;
 
@@ -536,7 +593,11 @@ export class TagNavigationRenderer {
                 });
                 // Insert highlighted basename
                 const nameSpan = link.createEl("span");
-                nameSpan.innerHTML = this.highlightMatches(file.basename, this.filterQuery);
+                if (this.filterMode === TagFilterMode.TagsOnly) {
+                    nameSpan.textContent = file.basename; // No highlighting for filenames in TagsOnly mode
+                } else {
+                    nameSpan.innerHTML = this.highlightMatches(file.basename, this.filterQuery);
+                }
 
                 // Add date/time info based on the sort mode
                 if (this.sortMode.includes("time")) {
@@ -586,5 +647,57 @@ export class TagNavigationRenderer {
 
         // Replace all matches with <span class="highlight">$1</span>
         return original.replace(regex, `<span class="highlight">$1</span>`);
+    }
+
+    /**
+     * Render the settings button.
+     */
+    public renderSettingsButton(buttonEl: HTMLButtonElement): void {
+        buttonEl.empty();
+        setIcon(buttonEl, "settings");
+        buttonEl.setAttribute("aria-label", "View settings");
+        buttonEl.title = "View settings (e.g., filter mode)";
+    }
+
+    /**
+     * Show the settings menu at the given button.
+     * Currently, this menu only contains filter mode options.
+     */
+    public showSettingsMenu(settingsBtn: HTMLButtonElement, onFilterModeChange: (mode: TagFilterMode) => void): void {
+        const menu = new Menu();
+
+        // Add a header or separator if more settings groups are added in the future
+        menu.addItem((item) => item.setTitle("Filter Scope").setDisabled(true));
+
+
+        menu.addItem((item) => {
+            item.setTitle("Tags & Filenames")
+                .setIcon(this.filterMode === TagFilterMode.TagsAndFiles ? "checkmark" : "")
+                .onClick(() => {
+                    this.setFilterMode(TagFilterMode.TagsAndFiles);
+                    onFilterModeChange(this.getFilterMode());
+                });
+        });
+
+        menu.addItem((item) => {
+            item.setTitle("Tags Only")
+                .setIcon(this.filterMode === TagFilterMode.TagsOnly ? "checkmark" : "")
+                .onClick(() => {
+                    this.setFilterMode(TagFilterMode.TagsOnly);
+                    onFilterModeChange(this.getFilterMode());
+                });
+        });
+
+        menu.addItem((item) => {
+            item.setTitle("Filenames Only")
+                .setIcon(this.filterMode === TagFilterMode.FilesOnly ? "checkmark" : "")
+                .onClick(() => {
+                    this.setFilterMode(TagFilterMode.FilesOnly);
+                    onFilterModeChange(this.getFilterMode());
+                });
+        });
+
+        const rect = settingsBtn.getBoundingClientRect();
+        menu.showAtPosition({ x: rect.left, y: rect.bottom });
     }
 } 

@@ -217,7 +217,8 @@
 
 /* Style the sort button to indicate it's a dropdown */
 .tag-navigation-container .tag-nav-sort-btn,
-.tag-navigation-container .tag-nav-expand-btn {
+.tag-navigation-container .tag-nav-expand-btn,
+.tag-navigation-container .tag-nav-settings-btn {
     display: flex;
     align-items: center;
     padding: 4px 8px;
@@ -229,7 +230,8 @@
 }
 
 .tag-navigation-container .tag-nav-sort-btn:hover,
-.tag-navigation-container .tag-nav-expand-btn:hover {
+.tag-navigation-container .tag-nav-expand-btn:hover,
+.tag-navigation-container .tag-nav-settings-btn:hover {
     background-color: var(--background-modifier-hover);
 }
 

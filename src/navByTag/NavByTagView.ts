@@ -1,6 +1,6 @@
 import { ItemView, WorkspaceLeaf, IconName } from "obsidian";
 import TagTacticianPlugin from "../../main";
-import { TagNavigationRenderer } from "./TagNavigationRenderer";
+import { TagNavigationRenderer, TagFilterMode } from "./TagNavigationRenderer";
 
 /**
  * Unique ID for the tag-based file navigation view.
@@ -67,9 +67,7 @@ export class NavByTagView extends ItemView {
         sortBtn.onclick = (event) => {
             // Delegate to renderer to show menu
             this.renderer.showSortMenu(sortBtn, (newMode) => {
-                // Update button UI
                 this.renderer.renderSortButton(sortBtn);
-                // Re-render the list
                 this.renderList();
             });
             
@@ -86,6 +84,20 @@ export class NavByTagView extends ItemView {
             this.renderer.setExpandAll(!this.renderer.getExpandAll());
             this.renderer.renderExpandButton(expandAllBtn);
             this.renderList();
+        };
+
+        // Settings button (cog icon)
+        const settingsBtn = controls.createEl("button", { cls: "tag-nav-settings-btn clickable-icon" });
+        this.renderer.renderSettingsButton(settingsBtn); // Initialize button appearance
+        settingsBtn.onclick = (event) => {
+            this.renderer.showSettingsMenu(settingsBtn, (newFilterMode) => {
+                // The renderer updates its own filterMode via setFilterMode in the menu item's onClick
+                // Re-render the button to reflect current state (e.g. if icon changed based on a setting)
+                this.renderer.renderSettingsButton(settingsBtn); 
+                this.renderList(); // Re-render the list with the new filter mode or other settings applied
+            });
+            event.preventDefault();
+            event.stopPropagation();
         };
 
         // Filter input with clear button
