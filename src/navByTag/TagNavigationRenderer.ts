@@ -517,7 +517,7 @@ export class TagNavigationRenderer {
             });
 
             // Tag name (highlight filter matches here)
-            const tagName = groupHeader.createEl("span");
+            const tagName = groupHeader.createEl("span", { cls: "tag-group-name" });
             // Insert highlighted HTML instead of plain text:
             if (this.filterMode === TagFilterMode.FilesOnly) {
                 tagName.textContent = key; // No highlighting for tag names in FilesOnly mode

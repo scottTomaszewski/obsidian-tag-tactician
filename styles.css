@@ -284,6 +284,10 @@
     width: 0.9em;
 }
 
+.tag-navigation-container .tag-group-name {
+    width: -webkit-fill-available;
+}
+
 .tag-navigation-container .tag-group-header:hover {
     background-color: var(--background-modifier-hover);
 }
