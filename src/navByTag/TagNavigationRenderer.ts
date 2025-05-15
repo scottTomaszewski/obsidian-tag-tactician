@@ -1,6 +1,6 @@
-import { App, IconName, Menu, TFile, setIcon } from "obsidian";
-import { gatherTagsFromCache } from "../relatedView/TagIndexer";
-import { TagNavSortMode } from "../settings/PluginSettings";
+import {App, IconName, Menu, TFile, setIcon} from "obsidian";
+import {gatherTagsFromCache} from "../relatedView/TagIndexer";
+import {TagNavSortMode} from "../settings/PluginSettings";
 
 /**
  * Represents the structure of the tag hierarchy.
@@ -21,6 +21,9 @@ export enum TagFilterMode {
     FilesOnly = "files-only"
 }
 
+const tagGroupOpenIcon = "folder";
+const tagGroupClosedIcon = "folder-closed";
+
 /**
  * Handles the rendering and sorting logic for tag navigation
  */
@@ -37,13 +40,6 @@ export class TagNavigationRenderer {
     constructor(app: App, sortMode: TagNavSortMode) {
         this.app = app;
         this.sortMode = sortMode;
-    }
-
-    /**
-     * Set the current sort mode
-     */
-    public setSortMode(mode: TagNavSortMode): void {
-        this.sortMode = mode;
     }
 
     /**
@@ -101,10 +97,10 @@ export class TagNavigationRenderer {
     public renderSortButton(buttonEl: HTMLButtonElement): void {
         // Clear button content
         buttonEl.empty();
-        
+
         // Add icon and label
         let sortIcon: IconName;
-        
+
         switch (this.sortMode) {
             case "alphabetically-descending":
                 sortIcon = "arrow-down-az";
@@ -137,7 +133,7 @@ export class TagNavigationRenderer {
                 buttonEl.title = "Current sort: By modification date (oldest first)\nClick to change sort method";
                 break;
         }
-        
+
         // Add icon
         const iconSpan = buttonEl.createSpan();
         setIcon(iconSpan, sortIcon);
@@ -148,7 +144,7 @@ export class TagNavigationRenderer {
      */
     public showSortMenu(sortBtn: HTMLButtonElement, onSortChange: (mode: TagNavSortMode) => void): void {
         const menu = new Menu();
-        
+
         menu.addItem((item) => {
             item.setTitle("Sort alphabetically")
                 .setIcon(this.sortMode === "alphabetically-descending" ? "checkmark" : "")
@@ -157,7 +153,7 @@ export class TagNavigationRenderer {
                     onSortChange(this.sortMode);
                 });
         });
-        
+
         menu.addItem((item) => {
             item.setTitle("Sort by note count")
                 .setIcon(this.sortMode === "file-count-descending" ? "checkmark" : "")
@@ -166,9 +162,9 @@ export class TagNavigationRenderer {
                     onSortChange(this.sortMode);
                 });
         });
-        
+
         menu.addSeparator();
-        
+
         menu.addItem((item) => {
             item.setTitle("Sort by creation date (newest first)")
                 .setIcon(this.sortMode === "created-time-descending" ? "checkmark" : "")
@@ -177,7 +173,7 @@ export class TagNavigationRenderer {
                     onSortChange(this.sortMode);
                 });
         });
-        
+
         menu.addItem((item) => {
             item.setTitle("Sort by creation date (oldest first)")
                 .setIcon(this.sortMode === "created-time-ascending" ? "checkmark" : "")
@@ -186,9 +182,9 @@ export class TagNavigationRenderer {
                     onSortChange(this.sortMode);
                 });
         });
-        
+
         menu.addSeparator();
-        
+
         menu.addItem((item) => {
             item.setTitle("Sort by modification date (newest first)")
                 .setIcon(this.sortMode === "modified-time-descending" ? "checkmark" : "")
@@ -197,7 +193,7 @@ export class TagNavigationRenderer {
                     onSortChange(this.sortMode);
                 });
         });
-        
+
         menu.addItem((item) => {
             item.setTitle("Sort by modification date (oldest first)")
                 .setIcon(this.sortMode === "modified-time-ascending" ? "checkmark" : "")
@@ -206,10 +202,10 @@ export class TagNavigationRenderer {
                     onSortChange(this.sortMode);
                 });
         });
-        
+
         // Calculate position for the menu
         const rect = sortBtn.getBoundingClientRect();
-        menu.showAtPosition({ x: rect.left, y: rect.bottom });
+        menu.showAtPosition({x: rect.left, y: rect.bottom});
     }
 
     /**
@@ -231,8 +227,8 @@ export class TagNavigationRenderer {
      * Create a filter input with a clear button
      */
     public createFilterInput(container: HTMLElement, initialValue: string, placeholder: string, onChange: (value: string) => void): HTMLInputElement {
-        const filterWrapper = container.createEl("div", { cls: "filter-input-container" });
-        
+        const filterWrapper = container.createEl("div", {cls: "filter-input-container"});
+
         // Create the text input
         const filterInput = filterWrapper.createEl("input", {
             type: "search",
@@ -240,25 +236,25 @@ export class TagNavigationRenderer {
             cls: "filter-input",
         });
         filterInput.value = initialValue;
-        
+
         // Create the clear button
-        const clearButton = filterWrapper.createEl("span", { 
-            cls: "search-input-clear-button", 
-            attr: { 
-                "aria-label": "Clear filter" 
+        const clearButton = filterWrapper.createEl("span", {
+            cls: "search-input-clear-button",
+            attr: {
+                "aria-label": "Clear filter"
             }
         });
-        
+
         // Hide clear button when empty
         clearButton.style.display = initialValue ? "flex" : "none";
-        
+
         // Setup event handlers
         filterInput.oninput = () => {
             const value = filterInput.value.trim();
             clearButton.style.display = value ? "flex" : "none";
             onChange(value);
         };
-        
+
         clearButton.onclick = (e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -267,7 +263,7 @@ export class TagNavigationRenderer {
             onChange("");
             filterInput.focus();
         };
-        
+
         return filterInput;
     }
 
@@ -286,7 +282,7 @@ export class TagNavigationRenderer {
                 const tags = gatherTagsFromCache(fileCache);
                 if (tags.size === 0) {
                     if (!hierarchy["untagged"]) {
-                        hierarchy["untagged"] = { files: new Set(), children: {} };
+                        hierarchy["untagged"] = {files: new Set(), children: {}};
                     }
                     hierarchy["untagged"].files.add(file);
                 } else {
@@ -297,7 +293,7 @@ export class TagNavigationRenderer {
             } else {
                 // Add to untagged if no metadata cache is available
                 if (!hierarchy["untagged"]) {
-                    hierarchy["untagged"] = { files: new Set(), children: {} };
+                    hierarchy["untagged"] = {files: new Set(), children: {}};
                 }
                 hierarchy["untagged"].files.add(file);
             }
@@ -311,7 +307,7 @@ export class TagNavigationRenderer {
     private addToHierarchy(hierarchy: TagHierarchy, segments: string[], file: TFile) {
         const [head, ...rest] = segments;
         if (!hierarchy[head]) {
-            hierarchy[head] = { files: new Set(), children: {} };
+            hierarchy[head] = {files: new Set(), children: {}};
         }
         if (rest.length === 0) {
             hierarchy[head].files.add(file);
@@ -330,7 +326,7 @@ export class TagNavigationRenderer {
         const result: TagHierarchy = {};
         const normalizedFilterQuery = filterQuery.toLowerCase();
 
-        for (const [key, { files, children }] of Object.entries(hierarchy)) {
+        for (const [key, {files, children}] of Object.entries(hierarchy)) {
             const tagNameMatches = key.toLowerCase().includes(normalizedFilterQuery);
             const matchingFiles = new Set(
                 [...files].filter((file) =>
@@ -354,7 +350,7 @@ export class TagNavigationRenderer {
                     if (tagNameMatches || Object.keys(filteredChildren).length > 0) {
                         includeNode = true;
                         // Show all files if the tag or its children match, as we are not filtering by filename here
-                        filesToShow = new Set([...files]); 
+                        filesToShow = new Set([...files]);
                     }
                     break;
                 case TagFilterMode.FilesOnly:
@@ -377,12 +373,12 @@ export class TagNavigationRenderer {
                 // Special handling for FilesOnly: if a parent tag doesn't match but a child tag has matching files,
                 // the parent tag structure should still be created.
                 if (this.filterMode === TagFilterMode.FilesOnly && !tagNameMatches && matchingFiles.size === 0 && Object.keys(filteredChildren).length > 0) {
-                     result[key] = {
+                    result[key] = {
                         files: new Set<TFile>(), // No direct matching files for this parent, but children have them
                         children: filteredChildren,
                     };
                 } else if (includeNode) {
-                     result[key] = {
+                    result[key] = {
                         files: filesToShow,
                         children: filteredChildren,
                     };
@@ -413,29 +409,29 @@ export class TagNavigationRenderer {
         switch (mode) {
             case "alphabetically-descending":
                 sortedEntries.sort((a, b) =>
-                    a[0].localeCompare(b[0], undefined, { sensitivity: "base" })
+                    a[0].localeCompare(b[0], undefined, {sensitivity: "base"})
                 );
                 break;
-                
+
             case "file-count-descending":
                 sortedEntries.sort((a, b) => {
                     const countA = this.getTotalFileCountForNode(a[1]);
                     const countB = this.getTotalFileCountForNode(b[1]);
                     if (countB === countA) {
                         // tie-break by alphabetical
-                        return a[0].localeCompare(b[0], undefined, { sensitivity: "base" });
+                        return a[0].localeCompare(b[0], undefined, {sensitivity: "base"});
                     }
                     return countB - countA; // descending
                 });
                 break;
-                
+
             case "created-time-descending":
             case "created-time-ascending":
                 sortedEntries.sort((a, b) => {
                     const filesA = Array.from(a[1].files);
                     const filesB = Array.from(b[1].files);
                     if (filesA.length === 0 && filesB.length === 0) {
-                        return a[0].localeCompare(b[0], undefined, { sensitivity: "base" });
+                        return a[0].localeCompare(b[0], undefined, {sensitivity: "base"});
                     }
                     // Sort by the most recent or oldest creation time in each tag group
                     const getNewestCtime = (files: TFile[]) => {
@@ -447,21 +443,21 @@ export class TagNavigationRenderer {
                     const ctimeA = getNewestCtime(filesA);
                     const ctimeB = getNewestCtime(filesB);
                     if (ctimeA === ctimeB) {
-                        return a[0].localeCompare(b[0], undefined, { sensitivity: "base" });
+                        return a[0].localeCompare(b[0], undefined, {sensitivity: "base"});
                     }
                     return mode === "created-time-descending"
                         ? ctimeB - ctimeA // newest first
                         : ctimeA - ctimeB; // oldest first
                 });
                 break;
-                
+
             case "modified-time-descending":
             case "modified-time-ascending":
                 sortedEntries.sort((a, b) => {
                     const filesA = Array.from(a[1].files);
                     const filesB = Array.from(b[1].files);
                     if (filesA.length === 0 && filesB.length === 0) {
-                        return a[0].localeCompare(b[0], undefined, { sensitivity: "base" });
+                        return a[0].localeCompare(b[0], undefined, {sensitivity: "base"});
                     }
                     // Sort by the most recent or oldest modification time in each tag group
                     const getNewestMtime = (files: TFile[]) => {
@@ -473,7 +469,7 @@ export class TagNavigationRenderer {
                     const mtimeA = getNewestMtime(filesA);
                     const mtimeB = getNewestMtime(filesB);
                     if (mtimeA === mtimeB) {
-                        return a[0].localeCompare(b[0], undefined, { sensitivity: "base" });
+                        return a[0].localeCompare(b[0], undefined, {sensitivity: "base"});
                     }
                     return mode === "modified-time-descending"
                         ? mtimeB - mtimeA // recently modified first
@@ -493,31 +489,31 @@ export class TagNavigationRenderer {
      * Render the tag hierarchy recursively.
      */
     public renderTagGroup(container: HTMLElement, group: TagHierarchy, path: string[] = [], openFileCallback: (file: TFile) => void) {
-        for (const [key, { files, children }] of Object.entries(group)) {
+        for (const [key, {files, children}] of Object.entries(group)) {
             // Single-child collapsing check
             const shouldCollapse = Object.keys(children).length === 1 && files.size === 0;
             if (shouldCollapse) {
                 const [nextKey, nextValue] = Object.entries(children)[0];
-                this.renderTagGroup(container, { [`${key}/${nextKey}`]: nextValue }, path, openFileCallback);
+                this.renderTagGroup(container, {[`${key}/${nextKey}`]: nextValue}, path, openFileCallback);
                 continue;
             }
 
             // Create a <details> for this tag
-            const groupContainer = container.createEl("details", { cls: "tag-group" });
+            const groupContainer = container.createEl("details", {cls: "tag-group"});
             if (this.expandAll) {
                 groupContainer.setAttribute("open", "true");
             }
-            const groupHeader = groupContainer.createEl("summary", { cls: "tag-group-header" });
+            const groupHeader = groupContainer.createEl("summary", {cls: "tag-group-header"});
 
             // Icon
-            const icon = groupHeader.createEl("span", { cls: "tag-group-icon" });
-            setIcon(icon, groupContainer.open ? "chevron-down" : "chevron-right");
+            const icon = groupHeader.createEl("span", {cls: "tag-group-icon"});
+            setIcon(icon, groupContainer.open ? tagGroupOpenIcon : tagGroupClosedIcon);
             groupContainer.addEventListener("toggle", () => {
-                setIcon(icon, groupContainer.open ? "chevron-down" : "chevron-right");
+                setIcon(icon, groupContainer.open ? tagGroupOpenIcon : tagGroupClosedIcon);
             });
 
             // Tag name (highlight filter matches here)
-            const tagName = groupHeader.createEl("span", { cls: "tag-group-name" });
+            const tagName = groupHeader.createEl("span", {cls: "tag-group-name"});
             // Insert highlighted HTML instead of plain text:
             if (this.filterMode === TagFilterMode.FilesOnly) {
                 tagName.textContent = key; // No highlighting for tag names in FilesOnly mode
@@ -528,17 +524,17 @@ export class TagNavigationRenderer {
             tagName.title = path.length !== 0 ? `${path}/${key}` : key;
 
             // Count
-            const totalCount = this.getTotalFileCountForNode({ files, children });
+            const totalCount = this.getTotalFileCountForNode({files, children});
             if (totalCount > 0) {
                 const count = groupHeader.createEl("span", {
                     cls: "tag-group-count",
                 });
                 count.innerText = `${totalCount}`;
-                
+
                 // Create a more descriptive tooltip
                 const directFileCount = files.size;
                 const childFileCount = totalCount - directFileCount;
-                
+
                 let tooltipText = `Total notes: ${totalCount}`;
                 if (directFileCount > 0) {
                     tooltipText += `\nDirect tag matches: ${directFileCount}`;
@@ -546,7 +542,7 @@ export class TagNavigationRenderer {
                 if (childFileCount > 0) {
                     tooltipText += `\nNotes in subtags: ${childFileCount}`;
                 }
-                
+
                 count.title = tooltipText;
             }
 
@@ -557,40 +553,42 @@ export class TagNavigationRenderer {
             let sortedFiles = Array.from(files);
             switch (this.sortMode) {
                 case "alphabetically-descending":
-                    sortedFiles.sort((a, b) => 
-                        a.basename.localeCompare(b.basename, undefined, { sensitivity: "base" })
+                    sortedFiles.sort((a, b) =>
+                        a.basename.localeCompare(b.basename, undefined, {sensitivity: "base"})
                     );
                     break;
-                    
+
                 case "created-time-descending":
                     sortedFiles.sort((a, b) => b.stat.ctime - a.stat.ctime);
                     break;
-                    
+
                 case "created-time-ascending":
                     sortedFiles.sort((a, b) => a.stat.ctime - b.stat.ctime);
                     break;
-                    
+
                 case "modified-time-descending":
                     sortedFiles.sort((a, b) => b.stat.mtime - a.stat.mtime);
                     break;
-                    
+
                 case "modified-time-ascending":
                     sortedFiles.sort((a, b) => a.stat.mtime - b.stat.mtime);
                     break;
-                    
+
                 // For file-count-descending, just keep the default order
                 // as file count doesn't apply to individual files
             }
 
             // Render files
-            const list = groupContainer.createEl("ul", { cls: "tag-group-list" });
+            const list = groupContainer.createEl("ul", {cls: "tag-group-list"});
             for (const file of sortedFiles) {
-                const listItem = list.createEl("li", { cls: "tag-group-note" });
+                const listItem = list.createEl("li", {cls: "tag-group-note"});
                 listItem.title = file.path;
                 const link = listItem.createEl("a", {
                     cls: "internal-link",
                     href: `#${file.path}`,
                 });
+                setIcon(link, "file")
+
                 // Insert highlighted basename
                 const nameSpan = link.createEl("span");
                 if (this.filterMode === TagFilterMode.TagsOnly) {
@@ -601,14 +599,14 @@ export class TagNavigationRenderer {
 
                 // Add date/time info based on the sort mode
                 if (this.sortMode.includes("time")) {
-                    const timeSpan = link.createEl("span", { cls: "tag-note-time" });
-                    const date = this.sortMode.includes("created") 
-                        ? new Date(file.stat.ctime) 
+                    const timeSpan = link.createEl("span", {cls: "tag-note-time"});
+                    const date = this.sortMode.includes("created")
+                        ? new Date(file.stat.ctime)
                         : new Date(file.stat.mtime);
-                    
+
                     // Format the date for display
                     timeSpan.innerText = date.toLocaleDateString();
-                    
+
                     // More descriptive tooltip
                     const dateType = this.sortMode.includes("created") ? "Created" : "Modified";
                     timeSpan.title = `${dateType}: ${date.toLocaleString()}`;
@@ -698,6 +696,6 @@ export class TagNavigationRenderer {
         });
 
         const rect = settingsBtn.getBoundingClientRect();
-        menu.showAtPosition({ x: rect.left, y: rect.bottom });
+        menu.showAtPosition({x: rect.left, y: rect.bottom});
     }
 } 

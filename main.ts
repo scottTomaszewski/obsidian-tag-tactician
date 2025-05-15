@@ -234,10 +234,10 @@ export default class TagTacticianPlugin extends Plugin {
         
         if (!leaf) {
             // Create a new leaf
-            const rightLeaf = this.app.workspace.getRightLeaf(false);
-            if (rightLeaf) {
-                await rightLeaf.setViewState({ type: TAG_NAVIGATION_VIEW_TYPE });
-                this.app.workspace.revealLeaf(rightLeaf);
+            const leftLeaf = this.app.workspace.getLeftLeaf(false);
+            if (leftLeaf) {
+                await leftLeaf.setViewState({ type: TAG_NAVIGATION_VIEW_TYPE });
+                this.app.workspace.revealLeaf(leftLeaf);
             }
         } else {
             // Use existing leaf

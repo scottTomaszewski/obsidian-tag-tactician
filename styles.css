@@ -326,13 +326,23 @@
 
 .tag-navigation-container .tag-group-note a {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-start;
     align-items: center;
     text-decoration: none;
     color: var(--text-normal);
     padding: 2px 6px;
     border-radius: 3px;
     font-size: 0.9em;
+}
+
+.tag-navigation-container .tag-group-note svg.svg-icon {
+    position: fixed;
+    height: 0.9rem;
+    width: 0.9rem;
+}
+
+.tag-navigation-container .tag-group-note span {
+    margin-left: 1.25rem;
 }
 
 .tag-navigation-container .tag-group-note a .tag-note-time {
