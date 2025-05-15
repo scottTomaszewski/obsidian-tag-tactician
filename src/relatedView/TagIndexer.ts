@@ -84,10 +84,10 @@ export class TagIndexer {
         const allFiles = this.plugin.app.vault.getMarkdownFiles();
         const results: { notePath: string; score: number }[] = [];
 
-        const weightTagSimilarity = this.plugin.settings.weightTagSimilarity;
-        const weightTitleSimilarity = this.plugin.settings.weightTitleSimilarity;
-        const weightPathSimilarity = this.plugin.settings.weightPathSimilarity;
-        const weightLinkInterconnections = this.plugin.settings.weightLinkInterconnections;
+        const weightTagSimilarity = this.plugin.settings.get().weightTagSimilarity;
+        const weightTitleSimilarity = this.plugin.settings.get().weightTitleSimilarity;
+        const weightPathSimilarity = this.plugin.settings.get().weightPathSimilarity;
+        const weightLinkInterconnections = this.plugin.settings.get().weightLinkInterconnections;
 
         for (const candidateFile of allFiles) {
             const candidatePath = candidateFile.path;

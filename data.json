@@ -1,11 +1,12 @@
 {
   "showNonMarkdownWarning": true,
-  "tagListStyle": "brackets",
+  "tagListStyle": "hyphens",
   "defaultShowTags": true,
   "defaultShowScore": true,
   "minimumRelatedNotesScore": 1,
   "weightTagSimilarity": 1,
   "weightTitleSimilarity": 1,
   "weightPathSimilarity": 1,
-  "weightLinkInterconnections": 1
+  "weightLinkInterconnections": 1,
+  "nbtDefaultSort": "file-count-descending"
 }

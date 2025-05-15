@@ -1,6 +1,6 @@
-import { App, PluginSettingTab, Setting } from "obsidian";
+import {App, PluginSettingTab, Setting} from "obsidian";
 import TagTacticianPlugin from "../../main";
-import { TagNavSortMode } from "./PluginSettings";
+import {TagNavSortMode} from "./PluginSettings";
 
 export class TagTacticianSettingTab extends PluginSettingTab {
     plugin: TagTacticianPlugin;
@@ -11,7 +11,7 @@ export class TagTacticianSettingTab extends PluginSettingTab {
     }
 
     display(): void {
-        const { containerEl } = this;
+        const {containerEl} = this;
         containerEl.empty();
 
         // ==================
@@ -24,10 +24,9 @@ export class TagTacticianSettingTab extends PluginSettingTab {
             .setDesc("If enabled, the modal will display a warning for non-markdown files.")
             .addToggle((toggle) =>
                 toggle
-                    .setValue(this.plugin.settings.showNonMarkdownWarning)
+                    .setValue(this.plugin.settings.get().showNonMarkdownWarning)
                     .onChange(async (val) => {
-                        this.plugin.settings.showNonMarkdownWarning = val;
-                        await this.plugin.saveSettings();
+                        await this.plugin.settings.save({showNonMarkdownWarning: val});
                     })
             );
 
@@ -38,14 +37,9 @@ export class TagTacticianSettingTab extends PluginSettingTab {
                 dropdown
                     .addOption("hyphens", "Hyphens (block style)")
                     .addOption("brackets", "Square brackets (inline style)")
-
-                    // Current value from plugin settings
-                    .setValue(this.plugin.settings.tagListStyle)
-
-                    // Save the user's selection
+                    .setValue(this.plugin.settings.get().tagListStyle)
                     .onChange(async (value) => {
-                        this.plugin.settings.tagListStyle = value as "hyphens" | "brackets";
-                        await this.plugin.saveSettings();
+                        await this.plugin.settings.save({tagListStyle: value as "hyphens" | "brackets"})
                     });
             });
 
@@ -59,10 +53,9 @@ export class TagTacticianSettingTab extends PluginSettingTab {
             .setDesc("If enabled, the Related Notes sidebar will initially show tags.")
             .addToggle((toggle) => {
                 toggle
-                    .setValue(this.plugin.settings.defaultShowTags)
+                    .setValue(this.plugin.settings.get().defaultShowTags)
                     .onChange(async (val) => {
-                        this.plugin.settings.defaultShowTags = val;
-                        await this.plugin.saveSettings();
+                        await this.plugin.settings.save({defaultShowTags: val});
                     });
             });
 
@@ -71,10 +64,9 @@ export class TagTacticianSettingTab extends PluginSettingTab {
             .setDesc("If enabled, the Related Notes sidebar will initially show note scores.")
             .addToggle((toggle) => {
                 toggle
-                    .setValue(this.plugin.settings.defaultShowScore)
+                    .setValue(this.plugin.settings.get().defaultShowScore)
                     .onChange(async (val) => {
-                        this.plugin.settings.defaultShowScore = val;
-                        await this.plugin.saveSettings();
+                        await this.plugin.settings.save({defaultShowScore: val});
                     });
             });
 
@@ -84,15 +76,14 @@ export class TagTacticianSettingTab extends PluginSettingTab {
             .addText((text) => {
                 text
                     .setPlaceholder("1")
-                    .setValue(this.plugin.settings.minimumRelatedNotesScore.toString())
+                    .setValue(this.plugin.settings.get().minimumRelatedNotesScore.toString())
                     .onChange(async (val) => {
-                        this.plugin.settings.minimumRelatedNotesScore = Number(val);
-                        await this.plugin.saveSettings();
+                        await this.plugin.settings.save({minimumRelatedNotesScore: Number(val)});
                     });
             });
 
         new Setting(containerEl).setName('Related notes score weighting').setHeading();
-        containerEl.createEl("p", { text: "Higher values increase importance." });
+        containerEl.createEl("p", {text: "Higher values increase importance."});
 
         new Setting(containerEl)
             .setName("Tag similarity weight")
@@ -100,10 +91,9 @@ export class TagTacticianSettingTab extends PluginSettingTab {
             .addText((text) => {
                 text
                     .setPlaceholder("1.0")
-                    .setValue(this.plugin.settings.weightTagSimilarity.toString())
+                    .setValue(this.plugin.settings.get().weightTagSimilarity.toString())
                     .onChange(async (val) => {
-                        this.plugin.settings.weightTagSimilarity = Number(val);
-                        await this.plugin.saveSettings();
+                        await this.plugin.settings.save({weightTagSimilarity: Number(val)});
                     });
             });
 
@@ -113,10 +103,9 @@ export class TagTacticianSettingTab extends PluginSettingTab {
             .addText((text) => {
                 text
                     .setPlaceholder("1.0")
-                    .setValue(this.plugin.settings.weightTitleSimilarity.toString())
+                    .setValue(this.plugin.settings.get().weightTitleSimilarity.toString())
                     .onChange(async (val) => {
-                        this.plugin.settings.weightTitleSimilarity = Number(val);
-                        await this.plugin.saveSettings();
+                        await this.plugin.settings.save({weightTitleSimilarity: Number(val)});
                     });
             });
 
@@ -126,9 +115,9 @@ export class TagTacticianSettingTab extends PluginSettingTab {
             .addText((text) => {
                 text
                     .setPlaceholder("1.0")
-                    .setValue(this.plugin.settings.weightPathSimilarity.toString())
+                    .setValue(this.plugin.settings.get().weightPathSimilarity.toString())
                     .onChange(async (val) => {
-                        this.plugin.settings.weightPathSimilarity = Number(val);
+                        await this.plugin.settings.save({weightPathSimilarity: Number(val)});
                         await this.plugin.saveSettings();
                     });
             });
@@ -139,10 +128,9 @@ export class TagTacticianSettingTab extends PluginSettingTab {
             .addText((text) => {
                 text
                     .setPlaceholder("1.0")
-                    .setValue(this.plugin.settings.weightLinkInterconnections.toString())
+                    .setValue(this.plugin.settings.get().weightLinkInterconnections.toString())
                     .onChange(async (val) => {
-                        this.plugin.settings.weightLinkInterconnections = Number(val);
-                        await this.plugin.saveSettings();
+                        await this.plugin.settings.save({weightLinkInterconnections: Number(val)});
                     });
             });
 
@@ -162,10 +150,9 @@ export class TagTacticianSettingTab extends PluginSettingTab {
                     .addOption("created-time-ascending", "Oldest notes first")
                     .addOption("modified-time-descending", "Recently modified first")
                     .addOption("modified-time-ascending", "Least recently modified first")
-                    .setValue(this.plugin.settings.nbtDefaultSort)
+                    .setValue(this.plugin.settings.get().nbtDefaultSort)
                     .onChange(async (value) => {
-                        this.plugin.settings.nbtDefaultSort = value as TagNavSortMode;
-                        await this.plugin.saveSettings();
+                        await this.plugin.settings.save({nbtDefaultSort: value as TagNavSortMode});
                     });
             });
     }

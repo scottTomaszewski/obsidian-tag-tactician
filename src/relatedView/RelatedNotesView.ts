@@ -25,8 +25,8 @@ export class RelatedNotesView extends ItemView {
     constructor(leaf: WorkspaceLeaf, plugin: TagTacticianPlugin) {
         super(leaf);
         this.plugin = plugin;
-        this.showTags = this.plugin.settings.defaultShowTags;
-        this.showScore = this.plugin.settings.defaultShowScore;
+        this.showTags = this.plugin.settings.get().defaultShowTags;
+        this.showScore = this.plugin.settings.get().defaultShowScore;
     }
 
     getViewType(): string {
@@ -53,8 +53,8 @@ export class RelatedNotesView extends ItemView {
      */
     public refresh() {
         // Refresh the settings in case the defaults changed
-        this.showTags = this.plugin.settings.defaultShowTags;
-        this.showScore = this.plugin.settings.defaultShowScore;
+        this.showTags = this.plugin.settings.get().defaultShowTags;
+        this.showScore = this.plugin.settings.get().defaultShowScore;
 
         const container = this.containerEl;
         container.addClass("related-notes-container");
@@ -188,7 +188,7 @@ export class RelatedNotesView extends ItemView {
         // Show top results after filtering
         // TODO - make this slice configurable or infinite scrolling
         const topResults = filteredResults
-            .filter(r => r.score >= this.plugin.settings.minimumRelatedNotesScore);
+            .filter(r => r.score >= this.plugin.settings.get().minimumRelatedNotesScore);
         for (const { notePath, score } of topResults) {
             const noteFile = this.app.vault.getAbstractFileByPath(notePath);
             const item = container.createEl("div", { cls: "related-note-item" });
@@ -255,10 +255,10 @@ export class RelatedNotesView extends ItemView {
                         }
                         
                         // Calculate weighted scores
-                        const tagWeight = this.plugin.settings.weightTagSimilarity;
-                        const titleWeight = this.plugin.settings.weightTitleSimilarity;
-                        const pathWeight = this.plugin.settings.weightPathSimilarity;
-                        const linkWeight = this.plugin.settings.weightLinkInterconnections;
+                        const tagWeight = this.plugin.settings.get().weightTagSimilarity;
+                        const titleWeight = this.plugin.settings.get().weightTitleSimilarity;
+                        const pathWeight = this.plugin.settings.get().weightPathSimilarity;
+                        const linkWeight = this.plugin.settings.get().weightLinkInterconnections;
                         
                         const weightedTagScore = tagWeight * prefixOverlapScore;
                         const weightedTitleScore = titleWeight * titleSimScore;

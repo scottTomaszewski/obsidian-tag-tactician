@@ -72,7 +72,7 @@ export class SettingsService {
         this.emitChange();
     }
 
-    onChange(fn: Listener): () => void {
+    registerOnChange(fn: Listener): () => void {
         this.listeners.push(fn);
         // return unsubscribe
         return () => {
