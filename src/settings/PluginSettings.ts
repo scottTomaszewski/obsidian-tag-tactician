@@ -1,5 +1,3 @@
-import {Plugin} from "obsidian";
-
 export type TagListStyle = "hyphens" | "brackets";
 
 export type TagNavSortMode =
@@ -49,38 +47,3 @@ export const DEFAULT_SETTINGS: TagTacticianSettings = {
     weightLinkInterconnections: 1.0,
     nbtDefaultSort: "alphabetically-descending",
 };
-
-type Listener = (s: TagTacticianSettings) => void;
-
-// Emitter to help propagate updates to settings across the app
-export class SettingsService {
-    private settings: TagTacticianSettings;
-    private listeners: Listener[] = [];
-
-    constructor(private plugin: Plugin) {
-        // load existing or fall back to defaults
-        this.settings = Object.assign(DEFAULT_SETTINGS, this.plugin.loadData());
-    }
-
-    get(): TagTacticianSettings {
-        return this.settings;
-    }
-
-    async save(patch: Partial<TagTacticianSettings>) {
-        this.settings = {...this.settings, ...patch};
-        await this.plugin.saveData(this.settings);
-        this.emitChange();
-    }
-
-    onChange(fn: Listener): () => void {
-        this.listeners.push(fn);
-        // return unsubscribe
-        return () => {
-            this.listeners = this.listeners.filter(l => l !== fn);
-        };
-    }
-
-    private emitChange() {
-        for (const l of this.listeners) l(this.settings);
-    }
-}
