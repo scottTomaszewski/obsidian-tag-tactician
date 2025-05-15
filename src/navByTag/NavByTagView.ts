@@ -19,7 +19,7 @@ export class NavByTagView extends ItemView {
     constructor(leaf: WorkspaceLeaf, plugin: TagTacticianPlugin) {
         super(leaf);
         this.plugin = plugin;
-        this.renderer = new TagNavigationRenderer(this.app, plugin.settings.nbtDefaultSort);
+        this.renderer = new TagNavigationRenderer(plugin, plugin.settings.nbtDefaultSort);
     }
 
     getViewType(): string {
@@ -32,6 +32,10 @@ export class NavByTagView extends ItemView {
 
     getIcon(): IconName {
         return "folder-tree";
+    }
+
+    refresh() {
+        this.renderList();
     }
 
     async onOpen() {

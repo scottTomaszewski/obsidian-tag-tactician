@@ -244,6 +244,12 @@ export default class TagTacticianPlugin extends Plugin {
             this.app.workspace.revealLeaf(leaf);
         }
     }
+
+    refreshTagNavigationView() {
+        const leaves = this.app.workspace.getLeavesOfType(TAG_NAVIGATION_VIEW_TYPE);
+        let leaf = leaves.length > 0 ? leaves[0] : null;
+
+    }
 }
 
 /**

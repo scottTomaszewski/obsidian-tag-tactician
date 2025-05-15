@@ -12,12 +12,14 @@ export interface TagTacticianSettings {
     // ==================
     // Batch
     // ==================
+
     showNonMarkdownWarning: boolean;
     tagListStyle: TagListStyle;
 
     // ==================
     // Related Notes
     // ==================
+
     // Whether to show tags by default in Related Notes
     defaultShowTags: boolean;
     // Whether to show scores by default in Related Notes
@@ -32,7 +34,11 @@ export interface TagTacticianSettings {
     // ==================
     // Nav by Tags
     // ==================
+
     nbtDefaultSort: TagNavSortMode;
+    nbtTagGroupClosedIcon: string;
+    nbtTagGroupOpenIcon: string;
+    nbtFileIcon: string;
 }
 
 export const DEFAULT_SETTINGS: TagTacticianSettings = {
@@ -46,4 +52,7 @@ export const DEFAULT_SETTINGS: TagTacticianSettings = {
     weightPathSimilarity: 1.0,
     weightLinkInterconnections: 1.0,
     nbtDefaultSort: "alphabetically-descending",
+    nbtTagGroupClosedIcon: "chevron-right",
+    nbtTagGroupOpenIcon: "chevron-down",
+    nbtFileIcon: "",
 };

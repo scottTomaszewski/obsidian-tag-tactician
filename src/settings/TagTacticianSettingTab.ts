@@ -1,6 +1,7 @@
-import { App, PluginSettingTab, Setting } from "obsidian";
+import {App, PluginSettingTab, Setting} from "obsidian";
 import TagTacticianPlugin from "../../main";
-import { TagNavSortMode } from "./PluginSettings";
+import {TagNavSortMode} from "./PluginSettings";
+import {IconSelectionModal} from "./IconSelectionModal";
 
 export class TagTacticianSettingTab extends PluginSettingTab {
     plugin: TagTacticianPlugin;
@@ -11,7 +12,7 @@ export class TagTacticianSettingTab extends PluginSettingTab {
     }
 
     display(): void {
-        const { containerEl } = this;
+        const {containerEl} = this;
         containerEl.empty();
 
         // ==================
@@ -92,7 +93,7 @@ export class TagTacticianSettingTab extends PluginSettingTab {
             });
 
         new Setting(containerEl).setName('Related notes score weighting').setHeading();
-        containerEl.createEl("p", { text: "Higher values increase importance." });
+        containerEl.createEl("p", {text: "Higher values increase importance."});
 
         new Setting(containerEl)
             .setName("Tag similarity weight")
@@ -168,5 +169,89 @@ export class TagTacticianSettingTab extends PluginSettingTab {
                         await this.plugin.saveSettings();
                     });
             });
+        new Setting(containerEl)
+            .setName("Tag Group Icon (closed)")
+            .setDesc("Select the icon used for a collapsed tag group (default: 'chevron-right')")
+            .addButton(btn => {
+                    if (this.plugin.settings.nbtTagGroupClosedIcon) {
+                        btn.setIcon(this.plugin.settings.nbtTagGroupClosedIcon);
+                    } else {
+                        btn.setButtonText("Icon...");
+                    }
+                    return btn
+                        .onClick(() => {
+                            new IconSelectionModal(
+                                this.app,
+                                this.plugin.settings.nbtTagGroupClosedIcon,
+                                async (selectedIcon: string) => {
+                                    if (selectedIcon !== "") {
+                                        this.plugin.settings.nbtTagGroupClosedIcon = selectedIcon;
+                                        btn.setIcon(selectedIcon);
+                                    } else {
+                                        this.plugin.settings.nbtTagGroupClosedIcon = undefined;
+                                        btn.setButtonText("Icon...")
+                                    }
+                                    await this.plugin.saveSettings();
+                                    // TODO - want to refresh that view so it picks up the changed setting
+                                }).open();
+                        });
+                }
+            );
+        new Setting(containerEl)
+            .setName("Tag Group Icon (open)")
+            .setDesc("Select the icon used for an expanded tag group (default: 'chevron-down')")
+            .addButton(btn => {
+                    if (this.plugin.settings.nbtTagGroupOpenIcon) {
+                        btn.setIcon(this.plugin.settings.nbtTagGroupOpenIcon);
+                    } else {
+                        btn.setButtonText("Icon...");
+                    }
+                    return btn
+                        .onClick(() => {
+                            new IconSelectionModal(
+                                this.app,
+                                this.plugin.settings.nbtTagGroupOpenIcon,
+                                async (selectedIcon: string) => {
+                                    if (selectedIcon !== "") {
+                                        this.plugin.settings.nbtTagGroupOpenIcon = selectedIcon;
+                                        btn.setIcon(selectedIcon);
+                                    } else {
+                                        this.plugin.settings.nbtTagGroupOpenIcon = undefined;
+                                        btn.setButtonText("Icon...")
+                                    }
+                                    await this.plugin.saveSettings();
+                                    // TODO - want to refresh that view so it picks up the changed setting
+                                }).open();
+                        });
+                }
+            );
+        new Setting(containerEl)
+            .setName("File Icon")
+            .setDesc("Select the icon used for a file (default: '')")
+            .addButton(btn => {
+                    if (this.plugin.settings.nbtFileIcon) {
+                        btn.setIcon(this.plugin.settings.nbtFileIcon);
+                    } else {
+                        btn.setButtonText("Icon...");
+                    }
+                    return btn
+                        .onClick(() => {
+                            new IconSelectionModal(
+                                this.app,
+                                this.plugin.settings.nbtFileIcon,
+                                async (selectedIcon: string) => {
+                                    if (selectedIcon !== "") {
+                                        this.plugin.settings.nbtFileIcon = selectedIcon;
+                                        btn.setIcon(selectedIcon);
+                                    } else {
+                                        this.plugin.settings.nbtFileIcon = undefined;
+                                        btn.setButtonText("Icon...")
+                                    }
+                                    await this.plugin.saveSettings();
+                                    // TODO - want to refresh that view so it picks up the changed setting
+                                }).open();
+                        });
+                }
+            );
     }
 }

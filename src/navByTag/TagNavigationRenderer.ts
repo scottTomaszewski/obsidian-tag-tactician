@@ -1,6 +1,7 @@
 import {App, IconName, Menu, TFile, setIcon} from "obsidian";
 import {gatherTagsFromCache} from "../relatedView/TagIndexer";
 import {TagNavSortMode} from "../settings/PluginSettings";
+import TagTacticianPlugin from "../../main";
 
 /**
  * Represents the structure of the tag hierarchy.
@@ -21,14 +22,11 @@ export enum TagFilterMode {
     FilesOnly = "files-only"
 }
 
-const tagGroupOpenIcon = "folder";
-const tagGroupClosedIcon = "folder-closed";
-
 /**
  * Handles the rendering and sorting logic for tag navigation
  */
 export class TagNavigationRenderer {
-    private app: App;
+    private plugin: TagTacticianPlugin;
     private filterQuery: string = "";
     private expandAll: boolean = false;
     private sortMode: TagNavSortMode;
@@ -37,8 +35,8 @@ export class TagNavigationRenderer {
     /**
      * Create a new tag navigation renderer
      */
-    constructor(app: App, sortMode: TagNavSortMode) {
-        this.app = app;
+    constructor(plugin: TagTacticianPlugin, sortMode: TagNavSortMode) {
+        this.plugin = plugin;
         this.sortMode = sortMode;
     }
 
@@ -272,11 +270,11 @@ export class TagNavigationRenderer {
      */
     public buildTagHierarchy(): TagHierarchy {
         const hierarchy: TagHierarchy = {};
-        const allFiles = this.app.vault.getMarkdownFiles();
+        const allFiles = this.plugin.app.vault.getMarkdownFiles();
 
         for (const file of allFiles) {
             // Get file metadata cache, handle null case
-            const fileCache = this.app.metadataCache.getFileCache(file);
+            const fileCache = this.plugin.app.metadataCache.getFileCache(file);
             // Only process files with metadata cache
             if (fileCache) {
                 const tags = gatherTagsFromCache(fileCache);
@@ -507,9 +505,9 @@ export class TagNavigationRenderer {
 
             // Icon
             const icon = groupHeader.createEl("span", {cls: "tag-group-icon"});
-            setIcon(icon, groupContainer.open ? tagGroupOpenIcon : tagGroupClosedIcon);
+            setIcon(icon, groupContainer.open ? this.plugin.settings.nbtTagGroupOpenIcon : this.plugin.settings.nbtTagGroupClosedIcon);
             groupContainer.addEventListener("toggle", () => {
-                setIcon(icon, groupContainer.open ? tagGroupOpenIcon : tagGroupClosedIcon);
+                setIcon(icon, groupContainer.open ? this.plugin.settings.nbtTagGroupOpenIcon : this.plugin.settings.nbtTagGroupClosedIcon);
             });
 
             // Tag name (highlight filter matches here)
@@ -587,7 +585,7 @@ export class TagNavigationRenderer {
                     cls: "internal-link",
                     href: `#${file.path}`,
                 });
-                setIcon(link, "file")
+                setIcon(link, this.plugin.settings.nbtFileIcon)
 
                 // Insert highlighted basename
                 const nameSpan = link.createEl("span");
