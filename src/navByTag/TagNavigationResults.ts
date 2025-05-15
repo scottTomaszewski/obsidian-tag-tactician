@@ -1,6 +1,6 @@
 import {App, IconName, Menu, TFile, setIcon} from "obsidian";
 import {gatherTagsFromCache} from "../relatedView/TagIndexer";
-import {TagNavSortMode} from "../settings/PluginSettings";
+import {SettingsService, TagNavSortMode} from "../settings/PluginSettings";
 
 /**
  * Represents the structure of the tag hierarchy.
@@ -27,73 +27,27 @@ const tagGroupClosedIcon = "folder-closed";
 /**
  * Handles the rendering and sorting logic for tag navigation
  */
-export class TagNavigationRenderer {
+export class TagNavigationResults {
     private app: App;
+
     private filterQuery: string = "";
     private expandAll: boolean = false;
     private sortMode: TagNavSortMode;
     private filterMode: TagFilterMode = TagFilterMode.TagsAndFiles; // Default to tags and files
 
-    /**
-     * Create a new tag navigation renderer
-     */
-    constructor(app: App, sortMode: TagNavSortMode) {
+    constructor(app: App, settings: SettingsService) {
         this.app = app;
-        this.sortMode = sortMode;
+        this.sortMode = settings.get().nbtDefaultSort;
     }
 
-    /**
-     * Get the current sort mode
-     */
-    public getSortMode(): TagNavSortMode {
-        return this.sortMode;
-    }
-
-    /**
-     * Set filter query for searching
-     */
     public setFilterQuery(query: string): void {
         this.filterQuery = query;
     }
 
-    /**
-     * Get current filter query
-     */
-    public getFilterQuery(): string {
-        return this.filterQuery;
+    public toggleExpandAll() {
+        this.expandAll = !this.expandAll;
     }
 
-    /**
-     * Set expand all setting
-     */
-    public setExpandAll(expand: boolean): void {
-        this.expandAll = expand;
-    }
-
-    /**
-     * Get expand all setting
-     */
-    public getExpandAll(): boolean {
-        return this.expandAll;
-    }
-
-    /**
-     * Set the current filter mode
-     */
-    public setFilterMode(mode: TagFilterMode): void {
-        this.filterMode = mode;
-    }
-
-    /**
-     * Get the current filter mode
-     */
-    public getFilterMode(): TagFilterMode {
-        return this.filterMode;
-    }
-
-    /**
-     * Render the sort button with current mode
-     */
     public renderSortButton(buttonEl: HTMLButtonElement): void {
         // Clear button content
         buttonEl.empty();
@@ -319,12 +273,12 @@ export class TagNavigationRenderer {
     /**
      * Recursively filter the hierarchy so only nodes/files that match `filterQuery` remain.
      */
-    public filterHierarchy(hierarchy: TagHierarchy, filterQuery: string): TagHierarchy {
+    public filterHierarchy(hierarchy: TagHierarchy): TagHierarchy {
         // If no filter, return the original
-        if (!filterQuery) return hierarchy;
+        if (!this.filterQuery) return hierarchy;
 
         const result: TagHierarchy = {};
-        const normalizedFilterQuery = filterQuery.toLowerCase();
+        const normalizedFilterQuery = this.filterQuery.toLowerCase();
 
         for (const [key, {files, children}] of Object.entries(hierarchy)) {
             const tagNameMatches = key.toLowerCase().includes(normalizedFilterQuery);
@@ -333,7 +287,7 @@ export class TagNavigationRenderer {
                     file.basename.toLowerCase().includes(normalizedFilterQuery)
                 )
             );
-            const filteredChildren = this.filterHierarchy(children, filterQuery); // Pass original filterQuery for recursion
+            const filteredChildren = this.filterHierarchy(children); // Pass original filterQuery for recursion
 
             let includeNode = false;
             let filesToShow = new Set<TFile>();
@@ -392,21 +346,18 @@ export class TagNavigationRenderer {
     /**
      * Sort the hierarchy using the current sort mode
      */
-    public sortHierarchy(
-        hierarchy: TagHierarchy,
-        mode: TagNavSortMode
-    ): TagHierarchy {
+    public sortHierarchy(hierarchy: TagHierarchy): TagHierarchy {
         const sortedEntries = Object.entries(hierarchy).map(([key, node]) => {
             return [
                 key,
                 {
                     files: node.files,
-                    children: this.sortHierarchy(node.children, mode),
+                    children: this.sortHierarchy(node.children, this.sortMode),
                 },
             ] as const;
         });
 
-        switch (mode) {
+        switch (this.sortMode) {
             case "alphabetically-descending":
                 sortedEntries.sort((a, b) =>
                     a[0].localeCompare(b[0], undefined, {sensitivity: "base"})
@@ -436,7 +387,7 @@ export class TagNavigationRenderer {
                     // Sort by the most recent or oldest creation time in each tag group
                     const getNewestCtime = (files: TFile[]) => {
                         if (files.length === 0) return 0;
-                        return mode === "created-time-descending"
+                        return this.sortMode === "created-time-descending"
                             ? Math.max(...files.map(f => f.stat.ctime))
                             : Math.min(...files.map(f => f.stat.ctime));
                     };
@@ -445,7 +396,7 @@ export class TagNavigationRenderer {
                     if (ctimeA === ctimeB) {
                         return a[0].localeCompare(b[0], undefined, {sensitivity: "base"});
                     }
-                    return mode === "created-time-descending"
+                    return this.sortMode === "created-time-descending"
                         ? ctimeB - ctimeA // newest first
                         : ctimeA - ctimeB; // oldest first
                 });
@@ -462,7 +413,7 @@ export class TagNavigationRenderer {
                     // Sort by the most recent or oldest modification time in each tag group
                     const getNewestMtime = (files: TFile[]) => {
                         if (files.length === 0) return 0;
-                        return mode === "modified-time-descending"
+                        return this.sortMode === "modified-time-descending"
                             ? Math.max(...files.map(f => f.stat.mtime))
                             : Math.min(...files.map(f => f.stat.mtime));
                     };
@@ -471,7 +422,7 @@ export class TagNavigationRenderer {
                     if (mtimeA === mtimeB) {
                         return a[0].localeCompare(b[0], undefined, {sensitivity: "base"});
                     }
-                    return mode === "modified-time-descending"
+                    return this.sortMode === "modified-time-descending"
                         ? mtimeB - mtimeA // recently modified first
                         : mtimeA - mtimeB; // least recently modified first
                 });
@@ -672,8 +623,8 @@ export class TagNavigationRenderer {
             item.setTitle("Tags & Filenames")
                 .setIcon(this.filterMode === TagFilterMode.TagsAndFiles ? "checkmark" : "")
                 .onClick(() => {
-                    this.setFilterMode(TagFilterMode.TagsAndFiles);
-                    onFilterModeChange(this.getFilterMode());
+                    this.filterMode = TagFilterMode.TagsAndFiles;
+                    onFilterModeChange(this.filterMode);
                 });
         });
 
@@ -681,8 +632,8 @@ export class TagNavigationRenderer {
             item.setTitle("Tags Only")
                 .setIcon(this.filterMode === TagFilterMode.TagsOnly ? "checkmark" : "")
                 .onClick(() => {
-                    this.setFilterMode(TagFilterMode.TagsOnly);
-                    onFilterModeChange(this.getFilterMode());
+                    this.filterMode = TagFilterMode.TagsOnly;
+                    onFilterModeChange(this.filterMode);
                 });
         });
 
@@ -690,12 +641,12 @@ export class TagNavigationRenderer {
             item.setTitle("Filenames Only")
                 .setIcon(this.filterMode === TagFilterMode.FilesOnly ? "checkmark" : "")
                 .onClick(() => {
-                    this.setFilterMode(TagFilterMode.FilesOnly);
-                    onFilterModeChange(this.getFilterMode());
+                    this.filterMode = TagFilterMode.FilesOnly;
+                    onFilterModeChange(this.filterMode);
                 });
         });
 
         const rect = settingsBtn.getBoundingClientRect();
         menu.showAtPosition({x: rect.left, y: rect.bottom});
     }
-} 
+}

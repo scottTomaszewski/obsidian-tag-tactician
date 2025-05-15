@@ -9,19 +9,19 @@ import {
     Vault
 } from "obsidian";
 
-import { EditTagsModal } from "./src/batch/EditTagsModal";
-import { applyTagUpdates } from "./src/batch/FileTagProcessor";
-import { TagTacticianSettingTab } from "./src/settings/TagTacticianSettingTab";
-import { TagTacticianSettings, DEFAULT_SETTINGS } from "./src/settings/PluginSettings";
-import { TagIndexer } from "./src/relatedView/TagIndexer";
-import { RelatedNotesView, RELATED_NOTES_VIEW_TYPE } from "./src/relatedView/RelatedNotesView";
-import { NavByTagView, TAG_NAVIGATION_VIEW_TYPE } from "./src/navByTag/NavByTagView";
+import {EditTagsModal} from "./src/batch/EditTagsModal";
+import {applyTagUpdates} from "./src/batch/FileTagProcessor";
+import {TagTacticianSettingTab} from "./src/settings/TagTacticianSettingTab";
+import {SettingsService} from "./src/settings/PluginSettings";
+import {TagIndexer} from "./src/relatedView/TagIndexer";
+import {RelatedNotesView, RELATED_NOTES_VIEW_TYPE} from "./src/relatedView/RelatedNotesView";
+import {NavByTagView, TAG_NAVIGATION_VIEW_TYPE} from "./src/navByTag/NavByTagView";
 
 /**
  * Main plugin class for Tag Tactician
  */
 export default class TagTacticianPlugin extends Plugin {
-    settings: TagTacticianSettings;
+    settings: SettingsService;
     public tagIndexer: TagIndexer;
     private activeFilePath: string | null = null;
 
@@ -45,28 +45,24 @@ export default class TagTacticianPlugin extends Plugin {
         this.app.workspace.detachLeavesOfType(TAG_NAVIGATION_VIEW_TYPE);
     }
 
-    // --------------------------------
-    // Settings
-    // --------------------------------
-    
     /**
      * Load plugin settings
      */
     async loadSettings() {
-        this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+        this.settings = new SettingsService(this);
     }
 
     /**
      * Save plugin settings
      */
     async saveSettings() {
-        await this.saveData(this.settings);
+        await this.saveData(this.settings.get());
     }
 
     // --------------------------------
     // Batch Tag Editing
     // --------------------------------
-    
+
     /**
      * Set up batch tag editing feature
      */
@@ -78,7 +74,7 @@ export default class TagTacticianPlugin extends Plugin {
                 this.addTagMenuItem(menu, [file]);
             })
         );
-        
+
         this.registerEvent(
             this.app.workspace.on("files-menu", (menu, files) => {
                 if (!files || files.length === 0) return;
@@ -98,11 +94,8 @@ export default class TagTacticianPlugin extends Plugin {
                 .onClick(async () => {
                     const allItems = expandFolders(selection);
                     new EditTagsModal(this.app, allItems, async (updates) => {
-                        const modifiedCount = await applyTagUpdates(
-                            this.app,
-                            updates,
-                            this.settings
-                        );
+                        // TODO - move to settingsService
+                        const modifiedCount = await applyTagUpdates(this.app, updates, this.settings.get());
                         new Notice(`Updated frontmatter tags in ${modifiedCount} file(s).`);
                     }).open();
                 });
@@ -112,14 +105,14 @@ export default class TagTacticianPlugin extends Plugin {
     // --------------------------------
     // Related Notes
     // --------------------------------
-    
+
     /**
      * Set up the Related Notes view
      */
     private setupRelatedNotesView() {
         // Initialize the TagIndexer (for "Related Notes")
         this.tagIndexer = new TagIndexer(this);
-        
+
         // Register the "Related Notes" view
         this.registerView(RELATED_NOTES_VIEW_TYPE, (leaf) => new RelatedNotesView(leaf, this));
 
@@ -179,7 +172,7 @@ export default class TagTacticianPlugin extends Plugin {
         // Find existing leaf or create a new one
         const leaves = this.app.workspace.getLeavesOfType(RELATED_NOTES_VIEW_TYPE);
         let leaf = leaves.length > 0 ? leaves[0] : null;
-        
+
         if (!leaf) {
             // Create a new leaf
             const rightLeaf = this.app.workspace.getRightLeaf(false);
@@ -206,7 +199,7 @@ export default class TagTacticianPlugin extends Plugin {
     // --------------------------------
     // Nav By Tag
     // --------------------------------
-    
+
     /**
      * Set up the Tag Navigation view
      */
@@ -215,7 +208,7 @@ export default class TagTacticianPlugin extends Plugin {
             TAG_NAVIGATION_VIEW_TYPE,
             (leaf) => new NavByTagView(leaf, this)
         );
-        
+
         // Add a command to open the tag-based file navigation view
         this.addCommand({
             id: "open-tag-navigation-view",
@@ -231,12 +224,12 @@ export default class TagTacticianPlugin extends Plugin {
         // Find existing leaf or create a new one
         const leaves = this.app.workspace.getLeavesOfType(TAG_NAVIGATION_VIEW_TYPE);
         let leaf = leaves.length > 0 ? leaves[0] : null;
-        
+
         if (!leaf) {
             // Create a new leaf
             const leftLeaf = this.app.workspace.getLeftLeaf(false);
             if (leftLeaf) {
-                await leftLeaf.setViewState({ type: TAG_NAVIGATION_VIEW_TYPE });
+                await leftLeaf.setViewState({type: TAG_NAVIGATION_VIEW_TYPE});
                 this.app.workspace.revealLeaf(leftLeaf);
             }
         } else {

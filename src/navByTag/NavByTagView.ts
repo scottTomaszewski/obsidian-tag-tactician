@@ -1,6 +1,6 @@
 import { ItemView, WorkspaceLeaf, IconName } from "obsidian";
 import TagTacticianPlugin from "../../main";
-import { TagNavigationRenderer, TagFilterMode } from "./TagNavigationRenderer";
+import { TagNavigationResults } from "./TagNavigationResults";
 
 /**
  * Unique ID for the tag-based file navigation view.
@@ -11,15 +11,13 @@ export const TAG_NAVIGATION_VIEW_TYPE = "tag-navigation-view";
  * View component for tag-based file navigation.
  */
 export class NavByTagView extends ItemView {
-    private plugin: TagTacticianPlugin;
-    private renderer: TagNavigationRenderer;
+    private renderer: TagNavigationResults;
     private listContainerEl: HTMLElement | null = null;
     private filterQuery: string = "";
 
     constructor(leaf: WorkspaceLeaf, plugin: TagTacticianPlugin) {
         super(leaf);
-        this.plugin = plugin;
-        this.renderer = new TagNavigationRenderer(this.app, plugin.settings.nbtDefaultSort);
+        this.renderer = new TagNavigationResults(this.app, plugin.settings);
     }
 
     getViewType(): string {
@@ -81,7 +79,7 @@ export class NavByTagView extends ItemView {
         this.renderer.renderExpandButton(expandAllBtn);
         expandAllBtn.onclick = () => {
             // Toggle expand state
-            this.renderer.setExpandAll(!this.renderer.getExpandAll());
+            this.renderer.toggleExpandAll();
             this.renderer.renderExpandButton(expandAllBtn);
             this.renderList();
         };
@@ -130,8 +128,8 @@ export class NavByTagView extends ItemView {
 
         // Use renderer to build, filter, sort and render the tag hierarchy
         const tagHierarchy = this.renderer.buildTagHierarchy();
-        const filteredHierarchy = this.renderer.filterHierarchy(tagHierarchy, this.renderer.getFilterQuery());
-        const sortedHierarchy = this.renderer.sortHierarchy(filteredHierarchy, this.renderer.getSortMode());
+        const filteredHierarchy = this.renderer.filterHierarchy(tagHierarchy);
+        const sortedHierarchy = this.renderer.sortHierarchy(filteredHierarchy);
         
         // Render using the renderer
         this.renderer.renderTagGroup(this.listContainerEl, sortedHierarchy, [], (file) => {
