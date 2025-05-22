@@ -9,6 +9,6 @@
   "weightPathSimilarity": 1,
   "weightLinkInterconnections": 1,
   "nbtDefaultSort": "alphabetically-descending",
-  "nbtTagGroupOpenIcon": "arrow-down-up",
-  "nbtFileIcon": ""
+  "nbtTagGroupClosedIcon": "folder-closed",
+  "nbtTagGroupOpenIcon": "folder-open"
 }

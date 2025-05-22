@@ -585,7 +585,12 @@ export class TagNavigationRenderer {
                     cls: "internal-link",
                     href: `#${file.path}`,
                 });
-                setIcon(link, this.plugin.settings.nbtFileIcon)
+                if (this.plugin.settings.nbtFileIcon) {
+                    setIcon(link, this.plugin.settings.nbtFileIcon)
+                } else {
+                    // Cover the space that the icon would normally occupy
+                    link.style.marginLeft = "-1.25rem";
+                }
 
                 // Insert highlighted basename
                 const nameSpan = link.createEl("span");
