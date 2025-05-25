@@ -317,70 +317,85 @@ export class TagNavigationRenderer {
     /**
      * Recursively filter the hierarchy so only nodes/files that match `filterQuery` remain.
      */
-    public filterHierarchy(hierarchy: TagHierarchy, filterQuery: string): TagHierarchy {
-        // If no filter, return the original
-        if (!filterQuery) return hierarchy;
+    public filterHierarchy(
+        hierarchy: TagHierarchy,
+        filterQuery: string,
+        isAncestorMatched: boolean = false
+    ): TagHierarchy {
+        // If no filter query is provided, return the original hierarchy.
+        if (!filterQuery) {
+            return hierarchy;
+        }
 
         const result: TagHierarchy = {};
         const normalizedFilterQuery = filterQuery.toLowerCase();
 
-        for (const [key, {files, children}] of Object.entries(hierarchy)) {
-            const tagNameMatches = key.toLowerCase().includes(normalizedFilterQuery);
+        for (const [key, { files, children }] of Object.entries(hierarchy)) {
+            const actualTagNameMatchesQuery = key.toLowerCase().includes(normalizedFilterQuery);
+            // Determine if the current node or any of its ancestors matched the query.
+            const newIsAncestorMatched = isAncestorMatched || actualTagNameMatchesQuery;
+
+            // Recursively filter children, passing down the updated isAncestorMatched status.
+            const filteredChildren = this.filterHierarchy(children, filterQuery, newIsAncestorMatched);
+
+            // Determine direct matching files for the current node based on the query.
             const matchingFiles = new Set(
                 [...files].filter((file) =>
                     file.basename.toLowerCase().includes(normalizedFilterQuery)
                 )
             );
-            const filteredChildren = this.filterHierarchy(children, filterQuery); // Pass original filterQuery for recursion
 
             let includeNode = false;
             let filesToShow = new Set<TFile>();
 
             switch (this.filterMode) {
                 case TagFilterMode.TagsAndFiles:
-                    if (tagNameMatches || matchingFiles.size > 0 || Object.keys(filteredChildren).length > 0) {
+                    // A node is included if:
+                    // 1. Its own name matches the query (actualTagNameMatchesQuery)
+                    // 2. An ancestor's name matched the query (isAncestorMatched)
+                    // 3. It has direct files whose names match the query (matchingFiles.size > 0)
+                    // 4. It has children that made it through the filtering (Object.keys(filteredChildren).length > 0)
+                    if (actualTagNameMatchesQuery || isAncestorMatched || matchingFiles.size > 0 || Object.keys(filteredChildren).length > 0) {
                         includeNode = true;
-                        // If tag name matches, show ALL files, otherwise only show matching files
-                        filesToShow = tagNameMatches ? new Set([...files]) : new Set([...matchingFiles]);
+                        if (actualTagNameMatchesQuery || isAncestorMatched) {
+                            // If this tag itself matches, or it's under a matched ancestor, show all its original files.
+                            filesToShow = new Set([...files]);
+                        } else {
+                            // Otherwise, inclusion is due to direct matching files (or children). Show only those matching files.
+                            filesToShow = matchingFiles;
+                        }
                     }
                     break;
+
                 case TagFilterMode.TagsOnly:
-                    if (tagNameMatches || Object.keys(filteredChildren).length > 0) {
+                    // A node is included if its own name matches, or an ancestor's name matched, or it has children.
+                    // Files are not filtered by the query in this mode.
+                    if (actualTagNameMatchesQuery || isAncestorMatched || Object.keys(filteredChildren).length > 0) {
                         includeNode = true;
-                        // Show all files if the tag or its children match, as we are not filtering by filename here
-                        filesToShow = new Set([...files]);
+                        filesToShow = new Set([...files]); // Show all original files
                     }
                     break;
+
                 case TagFilterMode.FilesOnly:
+                    // A node is included if it has direct files matching the query, or it has children that made it through.
+                    // If a tag (or its ancestor) matched the query name but it has no matching files/children,
+                    // it's included as an empty structural tag.
                     if (matchingFiles.size > 0 || Object.keys(filteredChildren).length > 0) {
                         includeNode = true;
-                        // Only show files that match the query
-                        filesToShow = new Set([...matchingFiles]);
+                        filesToShow = matchingFiles; // Show only files whose names match the query
+                    } else if ((actualTagNameMatchesQuery || isAncestorMatched) && Object.keys(filteredChildren).length === 0 && matchingFiles.size === 0) {
+                        // Preserve empty structural tag if it or an ancestor matched, but no content matches.
+                        includeNode = true;
+                        filesToShow = new Set<TFile>(); // No files to show for this node itself
                     }
                     break;
             }
 
             if (includeNode) {
-                // If the node is included but all its direct files are filtered out by FilesOnly mode,
-                // and children are also empty, we might still want to show the tag if its name matched previously.
-                // However, the current logic for FilesOnly means if no files match, the tag itself isn't shown unless children match.
-                // This needs careful consideration if the behavior should be different.
-                // For now, if filesToShow is empty due to FilesOnly filtering, but children exist, it's fine.
-                // If filesToShow is empty and no children, the node won't be added unless tagNameMatches was true in a mode that cares.
-
-                // Special handling for FilesOnly: if a parent tag doesn't match but a child tag has matching files,
-                // the parent tag structure should still be created.
-                if (this.filterMode === TagFilterMode.FilesOnly && !tagNameMatches && matchingFiles.size === 0 && Object.keys(filteredChildren).length > 0) {
-                    result[key] = {
-                        files: new Set<TFile>(), // No direct matching files for this parent, but children have them
-                        children: filteredChildren,
-                    };
-                } else if (includeNode) {
-                    result[key] = {
-                        files: filesToShow,
-                        children: filteredChildren,
-                    };
-                }
+                result[key] = {
+                    files: filesToShow,
+                    children: filteredChildren,
+                };
             }
         }
 
