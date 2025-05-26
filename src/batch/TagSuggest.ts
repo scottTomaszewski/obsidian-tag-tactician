@@ -28,7 +28,6 @@ export abstract class TagSuggestBase extends AbstractInputSuggest<string> {
 
     renderSuggestion(tag: string, el: HTMLElement): void {
         // el.setText(tag);
-        console.log(tag);
         const div = el.createEl("div", { cls: "tag-autocomplete-item", text: tag });
     }
 
@@ -91,9 +90,6 @@ export class ExistingTagSuggest extends TagSuggestBase {
         const currentTags = inputStr.split(/[, ]+/);
         const lastTag = currentTags[currentTags.length - 1].toLowerCase();
         
-        console.log("lastTag:", lastTag);
-        console.log("tags:", tags); // Don't use string concatenation for logging arrays
-        
         // Make the filtering more strict to avoid empty tag matches
         // Only show suggestions if the user has typed at least one character
         if (lastTag.length === 0) {
@@ -104,7 +100,6 @@ export class ExistingTagSuggest extends TagSuggestBase {
             .filter(tag => tag.toLowerCase().includes(lastTag))
             .slice(0, 10); // Limit to 10 suggestions
         
-        console.log("filtered tags:", filteredTags);
         return filteredTags;
     }
 }
@@ -145,9 +140,6 @@ export class FileTagSuggest extends TagSuggestBase {
         const currentTags = inputStr.split(/[, ]+/);
         const lastTag = currentTags[currentTags.length - 1].toLowerCase();
         
-        console.log("lastTag:", lastTag);
-        console.log("tags:", tags); // Don't use string concatenation for logging arrays
-        
         // Make the filtering more strict to avoid empty tag matches
         // Only show suggestions if the user has typed at least one character
         if (lastTag.length === 0) {
@@ -158,7 +150,6 @@ export class FileTagSuggest extends TagSuggestBase {
             .filter(tag => tag.toLowerCase().includes(lastTag))
             .slice(0, 10); // Limit to 10 suggestions
         
-        console.log("filtered tags:", filteredTags);
         return filteredTags;
     }
 } 

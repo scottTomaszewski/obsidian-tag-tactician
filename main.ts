@@ -85,6 +85,31 @@ export default class TagTacticianPlugin extends Plugin {
                 this.addTagMenuItem(menu, files);
             })
         );
+
+        // Search Results menu commands
+        this.registerEvent(
+            this.app.workspace.on("search:results-menu", (menu: Menu, leaf: any) => {
+                let files = [] as TFile[]
+                leaf.dom.vChildren.children.forEach((e: any) => files.push(e.file))  // TODO: there must be a better way to do this!
+                if(files.length < 1){return}
+
+                menu.addItem((item) =>{
+                    item
+                        .setTitle("Tag-Tactician: Edit tags on " + files.length + " notes...")
+                        .setIcon("tag")
+                        .onClick(() => {
+                            new EditTagsModal(this.app, files, async (updates) => {
+                                const modifiedCount = await applyTagUpdates(
+                                    this.app,
+                                    updates,
+                                    this.settings
+                                );
+                                new Notice(`Updated frontmatter tags in ${modifiedCount} file(s).`);
+                            }).open();
+                        });
+                })
+            })
+        )
     }
 
     /**
