@@ -22,11 +22,9 @@ Tag Tactician also has a "Tag Navigation" view to display your notes in a hierar
 
 1. **BACK UP YOUR VAULT**
    2. This plugin is still in early development and there is no undo feature!
-1. Right-click on:
-   1. A single note, 
-   2. Multiple selected notes, or 
-   3. A folder (to include all .md files within).
-2. Choose “Edit tags (frontmatter)” from the menu.
+1. Access the bulk-edit modal in one of the following ways:
+   1. Right-click one or more notes or folders and select “Edit tags (frontmatter)”
+   2. In the search results view, click the "search results" component select "Tag-Tactician: Edit tags on X notes"
 3. A modal will appear, showing:
    1. Fields for “Tags to add” and “Tags to remove.”
       2. For multiple tags, separate them with commas.
