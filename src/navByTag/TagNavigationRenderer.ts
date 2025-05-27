@@ -501,19 +501,25 @@ export class TagNavigationRenderer {
     /**
      * Render the tag hierarchy recursively.
      */
-    public renderTagGroup(container: HTMLElement, group: TagHierarchy, path: string[] = [], openFileCallback: (file: TFile) => void) {
+    public renderTagGroup(container: HTMLElement, group: TagHierarchy, path: string[] = [], openFileCallback: (file: TFile) => void, previouslyExpandedPaths?: Set<string>) {
         for (const [key, {files, children}] of Object.entries(group)) {
             // Single-child collapsing check
             const shouldCollapse = Object.keys(children).length === 1 && files.size === 0;
             if (shouldCollapse) {
                 const [nextKey, nextValue] = Object.entries(children)[0];
-                this.renderTagGroup(container, {[`${key}/${nextKey}`]: nextValue}, path, openFileCallback);
+                // Pass down previouslyExpandedPaths
+                this.renderTagGroup(container, {[`${key}/${nextKey}`]: nextValue}, path, openFileCallback, previouslyExpandedPaths);
                 continue;
             }
 
+            // Generate the full path for this tag group
+            const currentTagPath = (path.length > 0 ? path.join('/') + '/' : '') + key;
+
             // Create a <details> for this tag
             const groupContainer = container.createEl("details", {cls: "tag-group"});
-            if (this.expandAll) {
+            groupContainer.setAttribute("data-tag-path", currentTagPath); // Store the path
+
+            if (this.expandAll || (previouslyExpandedPaths && previouslyExpandedPaths.has(currentTagPath))) {
                 groupContainer.setAttribute("open", "true");
             }
             const groupHeader = groupContainer.createEl("summary", {cls: "tag-group-header"});
@@ -559,8 +565,8 @@ export class TagNavigationRenderer {
                 count.title = tooltipText;
             }
 
-            // Recursively render children
-            this.renderTagGroup(groupContainer, children, [...path, key], openFileCallback);
+            // Recursively render children, passing down previouslyExpandedPaths
+            this.renderTagGroup(groupContainer, children, [...path, key], openFileCallback, previouslyExpandedPaths);
 
             // Sort files according to the current sort mode
             let sortedFiles = Array.from(files);
@@ -715,5 +721,22 @@ export class TagNavigationRenderer {
 
         const rect = settingsBtn.getBoundingClientRect();
         menu.showAtPosition({x: rect.left, y: rect.bottom});
+    }
+
+    /**
+     * Gathers the paths of all currently expanded tag groups.
+     * @param containerEl The HTML element containing the tag groups.
+     * @returns A Set of strings, where each string is the data-tag-path of an expanded group.
+     */
+    public getCurrentlyExpandedTagPaths(containerEl: HTMLElement): Set<string> {
+        const expandedPaths = new Set<string>();
+        const openGroups = containerEl.querySelectorAll('details.tag-group[open]');
+        openGroups.forEach(group => {
+            const path = group.getAttribute('data-tag-path');
+            if (path) {
+                expandedPaths.add(path);
+            }
+        });
+        return expandedPaths;
     }
 } 

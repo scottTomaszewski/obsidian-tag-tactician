@@ -128,6 +128,9 @@ export class NavByTagView extends ItemView {
      */
     private renderList(): void {
         if (!this.listContainerEl) return;
+
+        // Get currently expanded paths before clearing
+        const previouslyExpandedPaths = this.renderer.getCurrentlyExpandedTagPaths(this.listContainerEl);
         
         // Clear existing content
         this.listContainerEl.empty();
@@ -137,10 +140,10 @@ export class NavByTagView extends ItemView {
         const filteredHierarchy = this.renderer.filterHierarchy(tagHierarchy, this.renderer.getFilterQuery());
         const sortedHierarchy = this.renderer.sortHierarchy(filteredHierarchy, this.renderer.getSortMode());
         
-        // Render using the renderer
+        // Render using the renderer, passing the expanded paths
         this.renderer.renderTagGroup(this.listContainerEl, sortedHierarchy, [], (file) => {
             // Handle file opening
             this.app.workspace.getLeaf().openFile(file);
-        });
+        }, previouslyExpandedPaths);
     }
 }
