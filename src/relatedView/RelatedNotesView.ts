@@ -302,6 +302,8 @@ export class RelatedNotesView extends ItemView {
 
             // Left-click => open file
             link.addEventListener("click", (evt) => {
+                // Ignore right-clicks
+                if (evt.button !== 0) return;
                 evt.preventDefault();
                 evt.stopPropagation();
                 if (noteFile instanceof TFile) {
@@ -313,12 +315,23 @@ export class RelatedNotesView extends ItemView {
 
             // Middle-click => open in new tab without switching to it
             link.addEventListener("auxclick", (evt) => {
+                // Ignore right-clicks
+                if (evt.button !== 0) return;
                 evt.preventDefault();
                 evt.stopPropagation();
                 if (noteFile instanceof TFile) {
                     // Create a new leaf without focusing it
                     this.app.workspace.openLinkText(notePath, "", true, { active: false, eState: {focus:false}});
                 }
+            });
+
+            // Add right-click context menu
+            link.addEventListener('contextmenu', (evt: MouseEvent) => {
+                evt.preventDefault();
+                evt.stopPropagation();
+                const menu = new Menu();
+                this.plugin.app.workspace.trigger('file-menu', menu, noteFile, this.plugin.app.workspace.getLeaf());
+                menu.showAtMouseEvent(evt);
             });
 
             // Optionally show tags

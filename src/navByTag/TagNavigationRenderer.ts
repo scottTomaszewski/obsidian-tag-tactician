@@ -1,4 +1,4 @@
-import {App, IconName, Menu, TFile, setIcon} from "obsidian";
+import {IconName, Menu, TFile, setIcon} from "obsidian";
 import {gatherTagsFromCache} from "../relatedView/TagIndexer";
 import {TagNavSortMode} from "../settings/PluginSettings";
 import TagTacticianPlugin from "../../main";
@@ -606,6 +606,7 @@ export class TagNavigationRenderer {
                     cls: "internal-link",
                     href: `#${file.path}`,
                 });
+
                 if (this.plugin.settings.nbtFileIcon) {
                     setIcon(link, this.plugin.settings.nbtFileIcon)
                 } else {
@@ -640,6 +641,15 @@ export class TagNavigationRenderer {
                     evt.preventDefault();
                     openFileCallback(file);
                 };
+
+                // Add right-click context menu
+                listItem.addEventListener('contextmenu', (evt: MouseEvent) => {
+                    evt.preventDefault();
+                    evt.stopPropagation();
+                    const menu = new Menu();
+                    this.plugin.app.workspace.trigger('file-menu', menu, file as TFile, this.plugin.app.workspace.getLeaf());
+                    menu.showAtMouseEvent(evt);
+                });
             }
         }
     }
