@@ -685,12 +685,15 @@ export class TagNavigationRenderer {
      * Show the settings menu at the given button.
      * Currently, this menu only contains filter mode options.
      */
-    public showSettingsMenu(settingsBtn: HTMLButtonElement, onFilterModeChange: (mode: TagFilterMode) => void): void {
+    public showSettingsMenu(
+        settingsBtn: HTMLButtonElement,
+        onFilterModeChange: (mode: TagFilterMode) => void,
+        onRefresh: () => void): void {
+
         const menu = new Menu();
 
         // Add a header or separator if more settings groups are added in the future
         menu.addItem((item) => item.setTitle("Filter Scope").setDisabled(true));
-
 
         menu.addItem((item) => {
             item.setTitle("Tags & Filenames")
@@ -717,6 +720,13 @@ export class TagNavigationRenderer {
                     this.setFilterMode(TagFilterMode.FilesOnly);
                     onFilterModeChange(this.getFilterMode());
                 });
+        });
+
+        menu.addSeparator();
+
+        menu.addItem((item) => {
+            item.setTitle("Refresh")
+                .onClick(() => onRefresh());
         });
 
         const rect = settingsBtn.getBoundingClientRect();

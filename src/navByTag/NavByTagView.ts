@@ -1,6 +1,6 @@
-import { ItemView, WorkspaceLeaf, IconName } from "obsidian";
+import {ItemView, WorkspaceLeaf, IconName} from "obsidian";
 import TagTacticianPlugin from "../../main";
-import { TagNavigationRenderer, TagFilterMode } from "./TagNavigationRenderer";
+import {TagNavigationRenderer, TagFilterMode} from "./TagNavigationRenderer";
 
 /**
  * Unique ID for the tag-based file navigation view.
@@ -55,33 +55,33 @@ export class NavByTagView extends ItemView {
         container.addClass("tag-navigation-container");
 
         // Header
-        const header = container.createEl("div", { cls: "tag-navigation-header" });
-        const titleRow = header.createEl("div", { cls: "tag-navigation-title-row" });
-        titleRow.createEl("h4", { text: "Tag Navigation" });
+        const header = container.createEl("div", {cls: "tag-navigation-header"});
+        const titleRow = header.createEl("div", {cls: "tag-navigation-title-row"});
+        titleRow.createEl("h4", {text: "Tag Navigation"});
 
         // Controls row
-        const controls = titleRow.createEl("div", { cls: "tag-navigation-controls" });
+        const controls = titleRow.createEl("div", {cls: "tag-navigation-controls"});
 
         // Sort dropdown button
-        const sortBtn = controls.createEl("button", { cls: "tag-nav-sort-btn clickable-icon" });
+        const sortBtn = controls.createEl("button", {cls: "tag-nav-sort-btn clickable-icon"});
         this.renderer.renderSortButton(sortBtn);
         sortBtn.setAttribute("aria-label", "Sort options");
         sortBtn.title = "Click to open sort options";
-        
+
         sortBtn.onclick = (event) => {
             // Delegate to renderer to show menu
             this.renderer.showSortMenu(sortBtn, (newMode) => {
                 this.renderer.renderSortButton(sortBtn);
                 this.renderList();
             });
-            
+
             // Prevent default to avoid any parent handlers
             event.preventDefault();
             event.stopPropagation();
         };
 
         // Expand/Collapse All button
-        const expandAllBtn = controls.createEl("button", { cls: "tag-nav-expand-btn clickable-icon" });
+        const expandAllBtn = controls.createEl("button", {cls: "tag-nav-expand-btn clickable-icon"});
         this.renderer.renderExpandButton(expandAllBtn);
         expandAllBtn.onclick = () => {
             // Toggle expand state
@@ -91,24 +91,27 @@ export class NavByTagView extends ItemView {
         };
 
         // Settings button (cog icon)
-        const settingsBtn = controls.createEl("button", { cls: "tag-nav-settings-btn clickable-icon" });
+        const settingsBtn = controls.createEl("button", {cls: "tag-nav-settings-btn clickable-icon"});
         this.renderer.renderSettingsButton(settingsBtn); // Initialize button appearance
         settingsBtn.onclick = (event) => {
-            this.renderer.showSettingsMenu(settingsBtn, (newFilterMode) => {
-                // The renderer updates its own filterMode via setFilterMode in the menu item's onClick
-                // Re-render the button to reflect current state (e.g. if icon changed based on a setting)
-                this.renderer.renderSettingsButton(settingsBtn); 
-                this.renderList(); // Re-render the list with the new filter mode or other settings applied
-            });
+            this.renderer.showSettingsMenu(
+                settingsBtn,
+                (newFilterMode) => {
+                    // The renderer updates its own filterMode via setFilterMode in the menu item's onClick
+                    // Re-render the button to reflect current state (e.g. if icon changed based on a setting)
+                    this.renderer.renderSettingsButton(settingsBtn);
+                    this.renderList(); // Re-render the list with the new filter mode or other settings applied
+                },
+                () => this.refresh());
             event.preventDefault();
             event.stopPropagation();
         };
 
         // Filter input with clear button
         this.renderer.createFilterInput(
-            header, 
-            this.filterQuery, 
-            "Filter tags...", 
+            header,
+            this.filterQuery,
+            "Filter tags...",
             (value) => {
                 this.filterQuery = value.toLowerCase();
                 this.renderer.setFilterQuery(this.filterQuery);
@@ -117,7 +120,7 @@ export class NavByTagView extends ItemView {
         );
 
         // Create the list container
-        this.listContainerEl = container.createEl("div", { cls: "tag-navigation-list-container" });
+        this.listContainerEl = container.createEl("div", {cls: "tag-navigation-list-container"});
 
         // Do initial render
         this.renderList();
@@ -131,7 +134,7 @@ export class NavByTagView extends ItemView {
 
         // Get currently expanded paths before clearing
         const previouslyExpandedPaths = this.renderer.getCurrentlyExpandedTagPaths(this.listContainerEl);
-        
+
         // Clear existing content
         this.listContainerEl.empty();
 
@@ -139,7 +142,7 @@ export class NavByTagView extends ItemView {
         const tagHierarchy = this.renderer.buildTagHierarchy();
         const filteredHierarchy = this.renderer.filterHierarchy(tagHierarchy, this.renderer.getFilterQuery());
         const sortedHierarchy = this.renderer.sortHierarchy(filteredHierarchy, this.renderer.getSortMode());
-        
+
         // Render using the renderer, passing the expanded paths
         this.renderer.renderTagGroup(this.listContainerEl, sortedHierarchy, [], (file) => {
             // Handle file opening
