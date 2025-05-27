@@ -10,7 +10,8 @@
     background-color: var(--text-highlight-bg);
     color: var(--text-normal);
     border-radius: 2px;
-    padding: 0 2px;
+    padding: 0 0px;
+    margin: 0;
 }
 
 /* Filter input with clear button */
@@ -343,6 +344,10 @@
 
 .tag-navigation-container .tag-group-note span {
     margin-left: 1.25rem;
+}
+
+.tag-navigation-container .tag-group-note span.highlight {
+    margin-left: 0;
 }
 
 .tag-navigation-container .tag-group-note a .tag-note-time {
