@@ -6,7 +6,7 @@ import {
     TFolder,
     MarkdownView,
     TFile,
-    Vault
+    Vault, CachedMetadata
 } from "obsidian";
 
 import { EditTagsModal } from "./src/batch/EditTagsModal";
@@ -247,6 +247,15 @@ export default class TagTacticianPlugin extends Plugin {
             name: "Open Tag-Based File Navigation",
             callback: () => this.activateTagNavigationView(),
         });
+
+        // Listen for active note changes (only if it's a MarkdownView)
+        let timer: number | null = null;
+        this.registerEvent(
+            this.app.metadataCache.on("changed", (file: TFile, meta: CachedMetadata) => {
+                window.clearTimeout(timer!);
+                timer = window.setTimeout(() => this.refreshTagNavigationView(), 150);
+            })
+        );
     }
 
     /**
@@ -273,7 +282,8 @@ export default class TagTacticianPlugin extends Plugin {
     refreshTagNavigationView() {
         const leaves = this.app.workspace.getLeavesOfType(TAG_NAVIGATION_VIEW_TYPE);
         let leaf = leaves.length > 0 ? leaves[0] : null;
-
+        const view = leaf.view instanceof NavByTagView ? leaf.view : null;
+        if (view) view.refresh();
     }
 }
 
