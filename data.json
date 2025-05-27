@@ -10,5 +10,6 @@
   "weightLinkInterconnections": 1,
   "nbtDefaultSort": "alphabetically-descending",
   "nbtTagGroupClosedIcon": "folder-closed",
-  "nbtTagGroupOpenIcon": "folder-open"
+  "nbtTagGroupOpenIcon": "folder-open",
+  "nbtFileIcon": "file"
 }

@@ -336,7 +336,7 @@
 }
 
 .tag-navigation-container .tag-group-note svg.svg-icon {
-    position: fixed;
+    position: absolute;
     height: 0.9rem;
     width: 0.9rem;
 }
