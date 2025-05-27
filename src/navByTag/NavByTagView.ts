@@ -85,9 +85,20 @@ export class NavByTagView extends ItemView {
         this.renderer.renderExpandButton(expandAllBtn);
         expandAllBtn.onclick = () => {
             // Toggle expand state
-            this.renderer.setExpandAll(!this.renderer.getExpandAll());
+            const wasPreviouslyExpandingAll = this.renderer.getExpandAll();
+            this.renderer.setExpandAll(!wasPreviouslyExpandingAll);
             this.renderer.renderExpandButton(expandAllBtn);
-            this.renderList();
+
+            // If the new state is "collapse all" (i.e., expandAll is false),
+            // then we pass a flag to renderList.
+            if (!this.renderer.getExpandAll()) {
+                this.renderList(true); // True signifies it's a "collapse all" action
+            } else {
+                // Otherwise (it's "expand all"), render normally.
+                // Individual states will be preserved if expandAll is false (not this case here),
+                // or all will be forced open if expandAll is true (this case).
+                this.renderList(false);
+            }
         };
 
         // Settings button (cog icon)
@@ -129,12 +140,19 @@ export class NavByTagView extends ItemView {
     /**
      * Render the tag hierarchy list
      */
-    private renderList(): void {
+    private renderList(isCollapseAllAction: boolean = false): void {
         if (!this.listContainerEl) return;
 
-        // Get currently expanded paths before clearing
-        const previouslyExpandedPaths = this.renderer.getCurrentlyExpandedTagPaths(this.listContainerEl);
-
+        // Get currently expanded paths before clearing, unless it's a collapse-all action
+        let previouslyExpandedPaths: Set<string> | undefined;
+        if (isCollapseAllAction) {
+            // When collapsing all, we don't want to preserve any individual open states for this render pass.
+            // The expandAll flag in the renderer (which is false) will dictate that everything is closed.
+            previouslyExpandedPaths = new Set<string>(); // Pass an empty set
+        } else {
+            previouslyExpandedPaths = this.renderer.getCurrentlyExpandedTagPaths(this.listContainerEl);
+        }
+        
         // Clear existing content
         this.listContainerEl.empty();
 
