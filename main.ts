@@ -148,6 +148,12 @@ export default class TagTacticianPlugin extends Plugin {
         // Register the "Related Notes" view
         this.registerView(RELATED_NOTES_VIEW_TYPE, (leaf) => new RelatedNotesView(leaf, this));
 
+        this.registerEvent(
+            this.app.workspace.on('layout-ready', async () => {
+                await this.activateRelatedNotesView();
+            })
+        );
+
         // Add command to show the "Related Notes" sidebar
         this.addCommand({
             id: "open-related-notes-view",
@@ -240,7 +246,13 @@ export default class TagTacticianPlugin extends Plugin {
             TAG_NAVIGATION_VIEW_TYPE,
             (leaf) => new NavByTagView(leaf, this)
         );
-        
+
+        this.registerEvent(
+            this.app.workspace.on('layout-ready', async () => {
+                await this.activateTagNavigationView();
+            })
+        );
+
         // Add a command to open the tag-based file navigation view
         this.addCommand({
             id: "open-tag-navigation-view",
@@ -271,11 +283,11 @@ export default class TagTacticianPlugin extends Plugin {
             const leftLeaf = this.app.workspace.getLeftLeaf(false);
             if (leftLeaf) {
                 await leftLeaf.setViewState({ type: TAG_NAVIGATION_VIEW_TYPE });
-                this.app.workspace.revealLeaf(leftLeaf);
+                await this.app.workspace.revealLeaf(leftLeaf);
             }
         } else {
             // Use existing leaf
-            this.app.workspace.revealLeaf(leaf);
+            await this.app.workspace.revealLeaf(leaf);
         }
     }
 
