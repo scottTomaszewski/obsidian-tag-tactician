@@ -293,7 +293,8 @@ export default class TagTacticianPlugin extends Plugin {
 
     refreshTagNavigationView() {
         const leaves = this.app.workspace.getLeavesOfType(TAG_NAVIGATION_VIEW_TYPE);
-        let leaf = leaves.length > 0 ? leaves[0] : null;
+        const leaf = leaves.length > 0 ? leaves[0] : null;
+        if (!leaf) return;
         const view = leaf.view instanceof NavByTagView ? leaf.view : null;
         if (view) view.refresh();
     }
