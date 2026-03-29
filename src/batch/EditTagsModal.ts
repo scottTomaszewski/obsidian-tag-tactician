@@ -4,10 +4,11 @@ import {
     TFile,
     TAbstractFile,
     Modal,
-    Notice, parseFrontMatterTags,
+    Notice,
 } from "obsidian";
 import * as yaml from "js-yaml";
 import { ExistingTagSuggest, FileTagSuggest } from './TagSuggest';
+import { readFileTags } from './TagReader';
 
 /**
  * Basic data about a file's tags (current & proposed).
@@ -213,12 +214,7 @@ export class EditTagsModal extends Modal {
         this.invalidYamlFiles = [];
 
         for (const file of this.mdFiles) {
-            const frontmatter = this.app.metadataCache.getFileCache(file).frontmatter;
-            let currentTags = parseFrontMatterTags(frontmatter);
-            currentTags = currentTags === null ? currentTags = [] : currentTags;
-
-            // remove leading #
-            currentTags = currentTags.map((t) => t.startsWith("#") ? t.slice(1) : t);
+            const currentTags = await readFileTags(this.app, file);
 
             const proposedTags = [...currentTags].sort();
             this.fileTagData.push({

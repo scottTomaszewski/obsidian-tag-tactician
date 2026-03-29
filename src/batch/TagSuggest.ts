@@ -1,4 +1,5 @@
-import { AbstractInputSuggest, App, parseFrontMatterTags, renderResults, TFile } from "obsidian";
+import { AbstractInputSuggest, App, TFile } from "obsidian";
+import { readFileTags } from './TagReader';
 
 
 // Base class for tag suggestions
@@ -65,23 +66,17 @@ export abstract class TagSuggestBase extends AbstractInputSuggest<string> {
 // Suggests tags that already exist in the vault
 export class ExistingTagSuggest extends TagSuggestBase {
     async getSuggestions(inputStr: string): Promise<string[]> {
-        const allTags = this.getVaultTags();
+        const allTags = await this.getVaultTags();
         return this.filterTags(allTags, inputStr);
     }
-    
-    private getVaultTags(): string[] {
+
+    private async getVaultTags(): Promise<string[]> {
         const allTags: Set<string> = new Set();
 
         const mdFiles = this.app.vault.getMarkdownFiles();
         for (const file of mdFiles) {
-            const frontmatter = this.app.metadataCache.getFileCache(file).frontmatter;
-            let currentTags = parseFrontMatterTags(frontmatter);
-            currentTags = currentTags === null ? currentTags = [] : currentTags;
-
-            // remove leading #
-            currentTags
-                .map((t) => t.startsWith("#") ? t.slice(1) : t)
-                .forEach(t => allTags.add(t));
+            const tags = await readFileTags(this.app, file);
+            tags.forEach(t => allTags.add(t));
         }
         return Array.from(allTags).sort();
     }
@@ -114,25 +109,18 @@ export class FileTagSuggest extends TagSuggestBase {
     }
     
     async getSuggestions(inputStr: string): Promise<string[]> {
-        const fileTags = this.getTagsFromFiles();
+        const fileTags = await this.getTagsFromFiles();
         return this.filterTags(fileTags, inputStr);
     }
-    
-    private getTagsFromFiles(): string[] {
-        const allTags: Set<string> = new Set();
-        const metadataCache = this.app.metadataCache;
-        
-        this.files.forEach(file => {
-            const frontmatter = this.app.metadataCache.getFileCache(file).frontmatter;
-            let currentTags = parseFrontMatterTags(frontmatter);
-            currentTags = currentTags === null ? currentTags = [] : currentTags;
 
-            // remove leading #
-            currentTags
-                .map((t) => t.startsWith("#") ? t.slice(1) : t)
-                .forEach(t => allTags.add(t));
-        });
-        
+    private async getTagsFromFiles(): Promise<string[]> {
+        const allTags: Set<string> = new Set();
+
+        for (const file of this.files) {
+            const tags = await readFileTags(this.app, file);
+            tags.forEach(t => allTags.add(t));
+        }
+
         return Array.from(allTags).sort();
     }
     
