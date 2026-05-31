@@ -1,6 +1,6 @@
 {
   "name": "tag-tactician",
-  "version": "0.9.3",
+  "version": "1.10.0",
   "description": "Tag Tactician - Better tag management and organization for Obsidian notes",
   "main": "main.js",
   "scripts": {

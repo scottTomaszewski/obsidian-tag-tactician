@@ -1,7 +1,7 @@
 {
   "id": "tag-tactician",
   "name": "Tag Tactician",
-  "version": "0.9.3",
+  "version": "1.10.0",
   "minAppVersion": "1.7.2",
   "description": "Better tag management: bulk operations, navigation by tags, and find related notes through tag similarity.",
   "author": "Scott Tomaszewski (Xentis)",
