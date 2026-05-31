@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.10.0
 
 - Corrected the minimum required Obsidian version to 1.7.2 to match the APIs the plugin actually uses
 - Updated all user-facing text (commands, menus, and settings) to sentence case, following Obsidian's style guidelines
