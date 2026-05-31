@@ -21,8 +21,8 @@ export class TagTacticianSettingTab extends PluginSettingTab {
         new Setting(containerEl).setName('Bulk tag operations').setHeading();
 
         new Setting(containerEl)
-            .setName("Show warning for non-markdown files")
-            .setDesc("If enabled, the modal will display a warning for non-markdown files.")
+            .setName("Show warning for non-Markdown files")
+            .setDesc("If enabled, the modal will display a warning for non-Markdown files.")
             .addToggle((toggle) =>
                 toggle
                     .setValue(this.plugin.settings.showNonMarkdownWarning)
@@ -57,7 +57,7 @@ export class TagTacticianSettingTab extends PluginSettingTab {
 
         new Setting(containerEl)
             .setName("Show tags by default")
-            .setDesc("If enabled, the Related Notes sidebar will initially show tags.")
+            .setDesc("If enabled, the related notes sidebar will initially show tags.")
             .addToggle((toggle) => {
                 toggle
                     .setValue(this.plugin.settings.defaultShowTags)
@@ -69,7 +69,7 @@ export class TagTacticianSettingTab extends PluginSettingTab {
 
         new Setting(containerEl)
             .setName("Show score by default")
-            .setDesc("If enabled, the Related Notes sidebar will initially show note scores.")
+            .setDesc("If enabled, the related notes sidebar will initially show note scores.")
             .addToggle((toggle) => {
                 toggle
                     .setValue(this.plugin.settings.defaultShowScore)
@@ -81,7 +81,7 @@ export class TagTacticianSettingTab extends PluginSettingTab {
 
         new Setting(containerEl)
             .setName("Hide results with score below")
-            .setDesc("Hide notes in the Related Notes sidebar with a score below this threshold.")
+            .setDesc("Hide notes in the related notes sidebar with a score below this threshold.")
             .addText((text) => {
                 text
                     .setPlaceholder("1")
@@ -97,7 +97,7 @@ export class TagTacticianSettingTab extends PluginSettingTab {
 
         new Setting(containerEl)
             .setName("Tag similarity weight")
-            .setDesc("The weight of tag similarity in the Related Notes score.")
+            .setDesc("The weight of tag similarity in the related notes score.")
             .addText((text) => {
                 text
                     .setPlaceholder("1.0")
@@ -110,7 +110,7 @@ export class TagTacticianSettingTab extends PluginSettingTab {
 
         new Setting(containerEl)
             .setName("Title similarity weight")
-            .setDesc("The weight of file name similarity in the Related Notes score.")
+            .setDesc("The weight of file name similarity in the related notes score.")
             .addText((text) => {
                 text
                     .setPlaceholder("1.0")
@@ -123,7 +123,7 @@ export class TagTacticianSettingTab extends PluginSettingTab {
 
         new Setting(containerEl)
             .setName("Path similarity weight")
-            .setDesc("The weight of file path similarity in the Related Notes score.")
+            .setDesc("The weight of file path similarity in the related notes score.")
             .addText((text) => {
                 text
                     .setPlaceholder("1.0")
@@ -136,7 +136,7 @@ export class TagTacticianSettingTab extends PluginSettingTab {
 
         new Setting(containerEl)
             .setName("Link interconnections weight")
-            .setDesc("The weight of notes having links to each other in the Related Notes score.")
+            .setDesc("The weight of notes having links to each other in the related notes score.")
             .addText((text) => {
                 text
                     .setPlaceholder("1.0")
@@ -170,7 +170,7 @@ export class TagTacticianSettingTab extends PluginSettingTab {
                     });
             });
         new Setting(containerEl)
-            .setName("Tag Group Icon (closed)")
+            .setName("Tag group icon (closed)")
             .setDesc("Select the icon used for a collapsed tag group (default: 'chevron-right')")
             .addButton(btn => {
                     if (this.plugin.settings.nbtTagGroupClosedIcon) {
@@ -188,7 +188,7 @@ export class TagTacticianSettingTab extends PluginSettingTab {
                                         this.plugin.settings.nbtTagGroupClosedIcon = selectedIcon;
                                         btn.setIcon(selectedIcon);
                                     } else {
-                                        this.plugin.settings.nbtTagGroupClosedIcon = undefined;
+                                        this.plugin.settings.nbtTagGroupClosedIcon = "";
                                         btn.setButtonText("Icon...")
                                     }
                                     await this.plugin.saveSettings();
@@ -198,7 +198,7 @@ export class TagTacticianSettingTab extends PluginSettingTab {
                 }
             );
         new Setting(containerEl)
-            .setName("Tag Group Icon (open)")
+            .setName("Tag group icon (open)")
             .setDesc("Select the icon used for an expanded tag group (default: 'chevron-down')")
             .addButton(btn => {
                     if (this.plugin.settings.nbtTagGroupOpenIcon) {
@@ -216,7 +216,7 @@ export class TagTacticianSettingTab extends PluginSettingTab {
                                         this.plugin.settings.nbtTagGroupOpenIcon = selectedIcon;
                                         btn.setIcon(selectedIcon);
                                     } else {
-                                        this.plugin.settings.nbtTagGroupOpenIcon = undefined;
+                                        this.plugin.settings.nbtTagGroupOpenIcon = "";
                                         btn.setButtonText("Icon...")
                                     }
                                     await this.plugin.saveSettings();
@@ -226,7 +226,7 @@ export class TagTacticianSettingTab extends PluginSettingTab {
                 }
             );
         new Setting(containerEl)
-            .setName("File Icon")
+            .setName("File icon")
             .setDesc("Select the icon used for a file (default: '')")
             .addButton(btn => {
                     if (this.plugin.settings.nbtFileIcon) {
@@ -244,7 +244,7 @@ export class TagTacticianSettingTab extends PluginSettingTab {
                                         this.plugin.settings.nbtFileIcon = selectedIcon;
                                         btn.setIcon(selectedIcon);
                                     } else {
-                                        this.plugin.settings.nbtFileIcon = undefined;
+                                        this.plugin.settings.nbtFileIcon = "";
                                         btn.setButtonText("Icon...")
                                     }
                                     await this.plugin.saveSettings();

@@ -28,8 +28,7 @@ export abstract class TagSuggestBase extends AbstractInputSuggest<string> {
     }
 
     renderSuggestion(tag: string, el: HTMLElement): void {
-        // el.setText(tag);
-        const div = el.createEl("div", { cls: "tag-autocomplete-item", text: tag });
+        el.createEl("div", { cls: "tag-autocomplete-item", text: tag });
     }
 
     selectSuggestion(tag: string): void {

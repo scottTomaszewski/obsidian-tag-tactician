@@ -2,9 +2,9 @@ import {App, getIconIds, Modal, setIcon} from "obsidian";
 
 export class IconSelectionModal extends Modal {
     currentIcon: string;
-    onSelect: (icon: string) => void;
+    onSelect: (icon: string) => void | Promise<void>;
 
-    constructor(app: App, currentIcon: string, onSelect: (icon: string) => void) {
+    constructor(app: App, currentIcon: string, onSelect: (icon: string) => void | Promise<void>) {
         super(app);
         this.currentIcon = currentIcon;
         this.onSelect = onSelect;
@@ -13,13 +13,14 @@ export class IconSelectionModal extends Modal {
     onOpen() {
         const {contentEl} = this;
         contentEl.empty();
-        contentEl.createEl('h2', {text: 'Select an Icon'});
+        contentEl.addClass('tt-icon-modal');
+        contentEl.createEl('h2', {text: 'Select an icon'});
 
         // TODO - add search
 
-        contentEl.createEl('button', {text: "No Icon"})
+        contentEl.createEl('button', {text: "No icon"})
             .addEventListener('click', () => {
-                this.onSelect("");
+                void this.onSelect("");
                 this.close();
             });
 
@@ -35,36 +36,10 @@ export class IconSelectionModal extends Modal {
             setIcon(iconEl, iconName);
 
             iconButton.addEventListener('click', () => {
-                this.onSelect(iconName);
+                void this.onSelect(iconName);
                 this.close();
             });
         });
-
-        // Add custom styles for the icon grid
-        const style = document.createElement('style');
-        style.textContent = `
-      .icon-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
-        gap: 10px;
-        margin-top: 20px;
-      }
-      .icon-button {
-        background: none;
-        border: none;
-        padding: 10px;
-        cursor: pointer;
-      }
-      .icon-button:hover {
-        background-color: var(--background-modifier-hover);
-      }
-      .icon {
-        width: 24px;
-        height: 24px;
-        margin: 0 auto;
-      }
-    `;
-        contentEl.appendChild(style);
     }
 
     onClose() {

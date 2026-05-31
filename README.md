@@ -64,7 +64,7 @@ The Related Notes view helps to find notes in your vault that are potentially re
 How much one note is "related" to is determined by customizable weighting of tag similarity, title similarity, path 
 similarity, path similarity, and linking to each other. 
 
-To open the Related Notes view, open the command palette and search for "Tag Tactician: Open Related Notes Sidebar".
+To open the Related Notes view, open the command palette and search for "Tag Tactician: Open related notes sidebar".
 
 When a note is active, the Related Notes View will show a list of related notes.  Each item contains:
 

@@ -14,8 +14,8 @@ export class BulkFrontmatterTagSettingsTab extends PluginSettingTab {
         containerEl.empty();
 
         new Setting(containerEl)
-            .setName("Show warning for non-markdown files")
-            .setDesc("If enabled, the modal will display a warning for non-markdown files.")
+            .setName("Show warning for non-Markdown files")
+            .setDesc("If enabled, the modal will display a warning for non-Markdown files.")
             .addToggle((toggle) =>
                 toggle
                     .setValue(this.plugin.settings.showNonMarkdownWarning)

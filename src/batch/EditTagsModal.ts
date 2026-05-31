@@ -6,7 +6,6 @@ import {
     Modal,
     Notice,
 } from "obsidian";
-import * as yaml from "js-yaml";
 import { ExistingTagSuggest, FileTagSuggest } from './TagSuggest';
 import { readFileTags } from './TagReader';
 
@@ -41,7 +40,7 @@ export class EditTagsModal extends Modal {
     /**
      * The user's callback, receiving an array of { file, finalTags } after the user applies changes.
      */
-    onSubmit: (filesToUpdate: { file: TFile; finalTags: string[] }[]) => void;
+    onSubmit: (filesToUpdate: { file: TFile; finalTags: string[] }[]) => void | Promise<void>;
 
     // The user's add/remove arrays, extracted from text inputs
     private tagsToAdd: string[] = [];
@@ -58,7 +57,7 @@ export class EditTagsModal extends Modal {
     constructor(
         app: App,
         files: TAbstractFile[],
-        onSubmit: (filesToUpdate: { file: TFile; finalTags: string[] }[]) => void
+        onSubmit: (filesToUpdate: { file: TFile; finalTags: string[] }[]) => void | Promise<void>
     ) {
         super(app);
 
@@ -110,7 +109,7 @@ export class EditTagsModal extends Modal {
 
         // 3) Render the top input fields for "tags to add" / "tags to remove"
         new Setting(contentEl)
-            .setName("Add Tags")
+            .setName("Add tags")
             .setDesc("Tags to add to files, separated by commas.")
             .addText(input => {
                 input.setPlaceholder("Tags to add (comma separated)")
@@ -122,7 +121,7 @@ export class EditTagsModal extends Modal {
             });
 
         new Setting(contentEl)
-            .setName("Remove Tags")
+            .setName("Remove tags")
             .setDesc("Tags to remove from files, separated by commas.")
             .addText(input => {
                 input.setPlaceholder("Tags to remove (comma separated)")
@@ -193,7 +192,7 @@ export class EditTagsModal extends Modal {
         // 7) Confirm button at the bottom
         const buttonContainer = contentEl.createDiv({ cls: 'modal-button-container' });
         buttonContainer.createEl('button', {
-            text: 'Apply Changes',
+            text: 'Apply changes',
             cls: 'mod-cta'
         }).addEventListener('click', () => this.applyChanges());
         
@@ -235,7 +234,7 @@ export class EditTagsModal extends Modal {
 
         // Checkbox
         const cbContainer = rowEl.createEl("div", {cls: "cb-col"});
-        const checkbox = cbContainer.createEl("input", {type: "checkbox"}) as HTMLInputElement;
+        const checkbox = cbContainer.createEl("input", {type: "checkbox"});
         checkbox.checked = tagData.accepted;
         checkbox.onchange = () => {
             tagData.accepted = checkbox.checked;
@@ -320,48 +319,10 @@ export class EditTagsModal extends Modal {
         }
 
         this.close();
-        this.onSubmit(updates);
+        void this.onSubmit(updates);
     }
 
     private parseTagInput(input: string): string[] {
         return input.split(/[,\s]+/).filter(tag => tag.trim().length > 0).map(tag => tag.trim());
     }
-}
-
-// ----------------------------------------------------------------
-// Utility Helpers
-// ----------------------------------------------------------------
-
-function parseTagInput(input: string): string[] {
-    if (!input || !input.trim()) {
-        return [];
-    }
-    // Split by commas or spaces, remove duplicates
-    return Array.from(
-        new Set(
-            input
-                .split(/[, ]+/)
-                .map((part) => part.trim())
-                .filter((part) => !!part)
-        )
-    );
-}
-
-function normalizeTags(tagsValue: unknown): string[] {
-    if (!tagsValue) return [];
-
-    if (Array.isArray(tagsValue)) {
-        return tagsValue.flatMap((item) =>
-            typeof item === "string" ? item : []
-        );
-    }
-
-    if (typeof tagsValue === "string") {
-        return tagsValue
-            .split(/[, ]+/)
-            .map((t) => t.trim())
-            .filter((t) => t.length > 0);
-    }
-
-    return [];
 }

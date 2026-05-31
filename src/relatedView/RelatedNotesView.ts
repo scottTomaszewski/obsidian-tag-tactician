@@ -34,7 +34,7 @@ export class RelatedNotesView extends ItemView {
     }
 
     getDisplayText(): string {
-        return "Related Notes";
+        return "Related notes";
     }
 
     getIcon(): IconName {
@@ -63,21 +63,20 @@ export class RelatedNotesView extends ItemView {
         // Title row (with "Options" gear icon)
         const header = container.createEl("div", { cls: "related-notes-header" });
         const titleRow = header.createEl("div", { cls: "related-notes-title-row" });
-        titleRow.createEl("h4", { text: "Related Notes" });
+        titleRow.createEl("h4", { text: "Related notes" });
 
         // Single "Options" button that opens a menu
-        const optionsBtn = titleRow.createEl("button", { cls: "clickable-icon" });
+        const optionsBtn = titleRow.createEl("button", { cls: "clickable-icon tt-options-btn" });
         setIcon(optionsBtn, "gear");
-        optionsBtn.style.marginLeft = "1rem";
 
         // Handle clicking the button => show menu
         optionsBtn.onclick = (evt: MouseEvent) => {
-            const menu = new Menu(this.app);
+            const menu = new Menu();
 
             // Menu item: Show Tags
             menu.addItem((item) => {
                 item
-                    .setTitle((this.showTags ? "✓ " : "") + "Show Tags")
+                    .setTitle((this.showTags ? "✓ " : "") + "Show tags")
                     .onClick(() => {
                         this.showTags = !this.showTags;
                         this.refreshList();
@@ -87,7 +86,7 @@ export class RelatedNotesView extends ItemView {
             // Menu item: Show Score
             menu.addItem((item) => {
                 item
-                    .setTitle((this.showScore ? "✓ " : "") + "Show Score")
+                    .setTitle((this.showScore ? "✓ " : "") + "Show score")
                     .onClick(() => {
                         this.showScore = !this.showScore;
                         this.refreshList();
@@ -99,7 +98,7 @@ export class RelatedNotesView extends ItemView {
             // Menu item: Refresh list
             menu.addItem((item) => {
                 item
-                    .setTitle("Refresh Notes")
+                    .setTitle("Refresh notes")
                     .onClick(() => {
                         this.refreshList();
                     });
@@ -129,21 +128,21 @@ export class RelatedNotesView extends ItemView {
         });
         
         // Hide clear button when empty
-        clearButton.style.display = this.filterQuery ? "flex" : "none";
-        
+        clearButton.toggleClass("is-visible", !!this.filterQuery);
+
         // Setup event handlers
         filterInput.oninput = () => {
             this.filterQuery = filterInput.value.trim().toLowerCase();
-            clearButton.style.display = this.filterQuery ? "flex" : "none";
+            clearButton.toggleClass("is-visible", !!this.filterQuery);
             this.refreshList();
         };
-        
+
         clearButton.onclick = (e) => {
             e.preventDefault();
             e.stopPropagation();
             filterInput.value = "";
             this.filterQuery = "";
-            clearButton.style.display = "none";
+            clearButton.toggleClass("is-visible", false);
             this.refreshList();
             filterInput.focus();
         };
@@ -191,6 +190,7 @@ export class RelatedNotesView extends ItemView {
             .filter(r => r.score >= this.plugin.settings.minimumRelatedNotesScore);
         for (const { notePath, score } of topResults) {
             const noteFile = this.app.vault.getAbstractFileByPath(notePath);
+            if (!(noteFile instanceof TFile)) continue;
             const item = container.createEl("div", { cls: "related-note-item" });
             const itemContent = item.createEl("div", { cls: "related-note-item-content" });
 
@@ -202,7 +202,7 @@ export class RelatedNotesView extends ItemView {
             const link = titleRow.createEl("a", {cls: "related-note-link"});
 
             // Instead of using `setText`, we highlight the filter matches in the title
-            link.innerHTML = this.highlightMatches(noteTitle, this.filterQuery);
+            this.renderHighlighted(link, noteTitle ?? notePath, this.filterQuery);
 
             // Score (conditionally displayed) - now part of the title row
             if (this.showScore) {
@@ -236,7 +236,7 @@ export class RelatedNotesView extends ItemView {
                         
                         // Path similarity
                         let pathSimScore = 0;
-                        if (noteFile.parent.path !== "/" && currentFile.parent.path !== "/") {
+                        if (noteFile.parent && currentFile.parent && noteFile.parent.path !== "/" && currentFile.parent.path !== "/") {
                             pathSimScore = levenshteinSimilarity(currentFile.path, notePath);
                         }
                         
@@ -292,7 +292,7 @@ export class RelatedNotesView extends ItemView {
             link.addEventListener("mouseover", (event) => {
                 this.app.workspace.trigger("hover-link", {
                     event,
-                    linktext: this.app.vault.getAbstractFileByPath(notePath).path,
+                    linktext: noteFile.path,
                     sourcePath: link.pathname,
                     source: RELATED_NOTES_VIEW_TYPE,
                     targetEl: link,
@@ -306,11 +306,7 @@ export class RelatedNotesView extends ItemView {
                 if (evt.button !== 0) return;
                 evt.preventDefault();
                 evt.stopPropagation();
-                if (noteFile instanceof TFile) {
-                    this.app.workspace.getLeaf().openFile(noteFile);
-                } else {
-                    console.error(`noteFile at ${notePath} is not a TFile?`)
-                }
+                void this.app.workspace.getLeaf().openFile(noteFile);
             });
 
             // Middle-click => open in new tab without switching to it
@@ -321,7 +317,7 @@ export class RelatedNotesView extends ItemView {
                 evt.stopPropagation();
                 if (noteFile instanceof TFile) {
                     // Create a new leaf without focusing it
-                    this.app.workspace.openLinkText(notePath, "", true, { active: false, eState: {focus:false}});
+                    void this.app.workspace.openLinkText(notePath, "", true, { active: false, eState: {focus:false}});
                 }
             });
 
@@ -347,7 +343,7 @@ export class RelatedNotesView extends ItemView {
                             attr: { disabled: true }
                         });
                         // highlight filter matches in tag
-                        tagA.innerHTML = this.highlightMatches(tagString, this.filterQuery);
+                        this.renderHighlighted(tagA, tagString, this.filterQuery);
                     });
                 }
             }
@@ -394,13 +390,33 @@ export class RelatedNotesView extends ItemView {
      * Utility function that highlights all instances of `filter`
      * inside `text`, wrapping them in <mark>...</mark> (case-insensitive).
      */
-    private highlightMatches(text: string, filter: string): string {
-        if (!filter) return text;
+    /**
+     * Render `text` into `el`, wrapping case-insensitive matches of `filter`
+     * in a highlighted span. Builds DOM nodes directly so user-derived text is
+     * never interpreted as HTML.
+     */
+    private renderHighlighted(el: HTMLElement, text: string, filter: string): void {
+        el.empty();
+        if (!filter) {
+            el.setText(text);
+            return;
+        }
 
-        // Create a regex that finds all (case-insensitive) occurrences of `filter`
-        // and wraps them in <mark>...</mark>.
         const re = new RegExp(`(${this.escapeRegex(filter)})`, "gi");
-        return text.replace(re, "<span class='highlight'>$1</span>");
+        let lastIndex = 0;
+        let match: RegExpExecArray | null;
+        while ((match = re.exec(text)) !== null) {
+            if (match.index > lastIndex) {
+                el.appendText(text.slice(lastIndex, match.index));
+            }
+            el.createSpan({ cls: "highlight", text: match[0] });
+            lastIndex = match.index + match[0].length;
+            // Guard against zero-length matches looping forever.
+            if (match.index === re.lastIndex) re.lastIndex++;
+        }
+        if (lastIndex < text.length) {
+            el.appendText(text.slice(lastIndex));
+        }
     }
 
     /**

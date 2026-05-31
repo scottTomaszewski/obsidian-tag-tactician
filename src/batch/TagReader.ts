@@ -23,7 +23,7 @@ async function readTagsFromContent(app: App, file: TFile): Promise<string[]> {
     if (!fmInfo.exists) return [];
 
     try {
-        const fmData = parseYaml(fmInfo.frontmatter);
+        const fmData = parseYaml(fmInfo.frontmatter) as Record<string, unknown> | null | undefined;
         return normalizeTags(fmData?.tags);
     } catch {
         return [];

@@ -1,8 +1,5 @@
-import { App, Vault, getFrontMatterInfo, parseYaml, TFile } from "obsidian";
+import { App, getFrontMatterInfo, parseYaml, TFile } from "obsidian";
 import * as yaml from "js-yaml";
-
-// Regex that only matches the first frontmatter block at the top of the file.
-const FRONTMATTER_REGEX = /^(?:\uFEFF)?---\r?\n([\s\S]*?)\r?\n---/;
 
 /** Possible array styles for tags. */
 export type TagListStyle = "hyphens" | "brackets";
@@ -48,7 +45,7 @@ export async function applyTagUpdates(
 
             if (frontMatterInfo.exists) {
                 // Frontmatter exists => update the tags field
-                const fmData = parseYaml(frontMatterInfo.frontmatter);
+                const fmData = (parseYaml(frontMatterInfo.frontmatter) ?? {}) as Record<string, unknown>;
                 fmData.tags = finalTags.length > 0 ? finalTags : undefined;
 
                 const newYaml = dumpYaml(fmData, settings.tagListStyle);
@@ -87,7 +84,7 @@ export async function applyTagUpdates(
  * "hyphens" => block style arrays (flowLevel: -1)
  * "brackets" => inline style arrays (flowLevel: 1 at the array level)
  */
-function dumpYaml(fmData: any, style: TagListStyle): string {
+function dumpYaml(fmData: Record<string, unknown>, style: TagListStyle): string {
     if (style === "brackets") {
         // Keep the top-level in block style, but arrays inline
         return yaml.dump(fmData, { flowLevel: 1 }).trim();

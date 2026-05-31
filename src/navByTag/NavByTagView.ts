@@ -1,6 +1,6 @@
 import {ItemView, WorkspaceLeaf, IconName} from "obsidian";
 import TagTacticianPlugin from "../../main";
-import {TagNavigationRenderer, TagFilterMode} from "./TagNavigationRenderer";
+import {TagNavigationRenderer} from "./TagNavigationRenderer";
 
 /**
  * Unique ID for the tag-based file navigation view.
@@ -27,7 +27,7 @@ export class NavByTagView extends ItemView {
     }
 
     getDisplayText(): string {
-        return "Tag Navigation";
+        return "Tag navigation";
     }
 
     getIcon(): IconName {
@@ -57,7 +57,7 @@ export class NavByTagView extends ItemView {
         // Header
         const header = container.createEl("div", {cls: "tag-navigation-header"});
         const titleRow = header.createEl("div", {cls: "tag-navigation-title-row"});
-        titleRow.createEl("h4", {text: "Tag Navigation"});
+        titleRow.createEl("h4", {text: "Tag navigation"});
 
         // Controls row
         const controls = titleRow.createEl("div", {cls: "tag-navigation-controls"});
@@ -164,7 +164,7 @@ export class NavByTagView extends ItemView {
         // Render using the renderer, passing the expanded paths
         this.renderer.renderTagGroup(this.listContainerEl, sortedHierarchy, [], (file) => {
             // Handle file opening
-            this.app.workspace.getLeaf().openFile(file);
+            void this.app.workspace.getLeaf().openFile(file);
         }, previouslyExpandedPaths);
     }
 }

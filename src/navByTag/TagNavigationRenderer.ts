@@ -102,33 +102,33 @@ export class TagNavigationRenderer {
         switch (this.sortMode) {
             case "alphabetically-descending":
                 sortIcon = "arrow-down-az";
-                buttonEl.setAttribute("aria-label", "Sort alphabetically (A-Z)");
-                buttonEl.title = "Current sort: Alphabetical (A-Z)\nClick to change sort method";
+                buttonEl.setAttribute("aria-label", "Sort alphabetically (a-z)");
+                buttonEl.title = "Current sort: Alphabetical (a-z)\nclick to change sort method";
                 break;
             case "file-count-descending":
                 sortIcon = "arrow-down-10";
                 buttonEl.setAttribute("aria-label", "Sort by note count (descending)");
-                buttonEl.title = "Current sort: By note count (highest first)\nClick to change sort method";
+                buttonEl.title = "Current sort: By note count (highest first)\nclick to change sort method";
                 break;
             case "created-time-descending":
                 sortIcon = "calendar-plus";
                 buttonEl.setAttribute("aria-label", "Sort by creation date (newest first)");
-                buttonEl.title = "Current sort: By creation date (newest first)\nClick to change sort method";
+                buttonEl.title = "Current sort: By creation date (newest first)\nclick to change sort method";
                 break;
             case "created-time-ascending":
                 sortIcon = "calendar-minus";
                 buttonEl.setAttribute("aria-label", "Sort by creation date (oldest first)");
-                buttonEl.title = "Current sort: By creation date (oldest first)\nClick to change sort method";
+                buttonEl.title = "Current sort: By creation date (oldest first)\nclick to change sort method";
                 break;
             case "modified-time-descending":
                 sortIcon = "pencil";
                 buttonEl.setAttribute("aria-label", "Sort by modification date (most recent first)");
-                buttonEl.title = "Current sort: By modification date (most recent first)\nClick to change sort method";
+                buttonEl.title = "Current sort: By modification date (most recent first)\nclick to change sort method";
                 break;
             case "modified-time-ascending":
                 sortIcon = "pencil-line";
                 buttonEl.setAttribute("aria-label", "Sort by modification date (oldest first)");
-                buttonEl.title = "Current sort: By modification date (oldest first)\nClick to change sort method";
+                buttonEl.title = "Current sort: By modification date (oldest first)\nclick to change sort method";
                 break;
         }
 
@@ -213,11 +213,11 @@ export class TagNavigationRenderer {
         if (this.expandAll) {
             setIcon(buttonEl, "chevrons-down-up");
             buttonEl.setAttribute("aria-label", "Collapse all tags");
-            buttonEl.title = "Currently showing expanded tags\nClick to collapse all tag groups";
+            buttonEl.title = "Currently showing expanded tags\nclick to collapse all tag groups";
         } else {
             setIcon(buttonEl, "chevrons-up-down");
             buttonEl.setAttribute("aria-label", "Expand all tags");
-            buttonEl.title = "Currently showing collapsed tags\nClick to expand all tag groups";
+            buttonEl.title = "Currently showing collapsed tags\nclick to expand all tag groups";
         }
     }
 
@@ -244,12 +244,12 @@ export class TagNavigationRenderer {
         });
 
         // Hide clear button when empty
-        clearButton.style.display = initialValue ? "flex" : "none";
+        clearButton.toggleClass("is-visible", !!initialValue);
 
         // Setup event handlers
         filterInput.oninput = () => {
             const value = filterInput.value.trim();
-            clearButton.style.display = value ? "flex" : "none";
+            clearButton.toggleClass("is-visible", !!value);
             onChange(value);
         };
 
@@ -257,7 +257,7 @@ export class TagNavigationRenderer {
             e.preventDefault();
             e.stopPropagation();
             filterInput.value = "";
-            clearButton.style.display = "none";
+            clearButton.toggleClass("is-visible", false);
             onChange("");
             filterInput.focus();
         };
@@ -537,10 +537,10 @@ export class TagNavigationRenderer {
             if (this.filterMode === TagFilterMode.FilesOnly) {
                 tagName.textContent = key; // No highlighting for tag names in FilesOnly mode
             } else {
-                tagName.innerHTML = this.highlightMatches(key, this.filterQuery);
+                this.renderHighlighted(tagName, key, this.filterQuery);
             }
             // Hover tip
-            tagName.title = path.length !== 0 ? `${path}/${key}` : key;
+            tagName.title = path.length !== 0 ? `${path.join("/")}/${key}` : key;
 
             // Count
             const totalCount = this.getTotalFileCountForNode({files, children});
@@ -611,7 +611,7 @@ export class TagNavigationRenderer {
                     setIcon(link, this.plugin.settings.nbtFileIcon)
                 } else {
                     // Cover the space that the icon would normally occupy
-                    link.style.marginLeft = "-1.25rem";
+                    link.addClass("tt-file-noicon");
                 }
 
                 // Insert highlighted basename
@@ -619,7 +619,7 @@ export class TagNavigationRenderer {
                 if (this.filterMode === TagFilterMode.TagsOnly) {
                     nameSpan.textContent = file.basename; // No highlighting for filenames in TagsOnly mode
                 } else {
-                    nameSpan.innerHTML = this.highlightMatches(file.basename, this.filterQuery);
+                    this.renderHighlighted(nameSpan, file.basename, this.filterQuery);
                 }
 
                 // Add date/time info based on the sort mode
@@ -647,7 +647,7 @@ export class TagNavigationRenderer {
                     evt.preventDefault();
                     evt.stopPropagation();
                     const menu = new Menu();
-                    this.plugin.app.workspace.trigger('file-menu', menu, file as TFile, this.plugin.app.workspace.getLeaf());
+                    this.plugin.app.workspace.trigger('file-menu', menu, file, this.plugin.app.workspace.getLeaf());
                     menu.showAtMouseEvent(evt);
                 });
             }
@@ -666,19 +666,33 @@ export class TagNavigationRenderer {
     }
 
     /**
-     * Helper method to highlight all occurrences of `filter` within `original`,
-     * wrapping them in <span class="highlight">... </span>. (Case-insensitive)
+     * Render `text` into `el`, wrapping case-insensitive matches of `filter` in a
+     * highlighted span. Builds DOM nodes directly so user-derived text is never
+     * interpreted as HTML.
      */
-    public highlightMatches(original: string, filter: string): string {
-        if (!filter) return original;
+    public renderHighlighted(el: HTMLElement, text: string, filter: string): void {
+        el.empty();
+        if (!filter) {
+            el.setText(text);
+            return;
+        }
 
-        // Escape regex specials in the filter text
         const escaped = filter.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-        // Build a case-insensitive regex
         const regex = new RegExp(`(${escaped})`, "gi");
-
-        // Replace all matches with <span class="highlight">$1</span>
-        return original.replace(regex, `<span class="highlight">$1</span>`);
+        let lastIndex = 0;
+        let match: RegExpExecArray | null;
+        while ((match = regex.exec(text)) !== null) {
+            if (match.index > lastIndex) {
+                el.appendText(text.slice(lastIndex, match.index));
+            }
+            el.createSpan({cls: "highlight", text: match[0]});
+            lastIndex = match.index + match[0].length;
+            // Guard against zero-length matches looping forever.
+            if (match.index === regex.lastIndex) regex.lastIndex++;
+        }
+        if (lastIndex < text.length) {
+            el.appendText(text.slice(lastIndex));
+        }
     }
 
     /**
@@ -703,10 +717,10 @@ export class TagNavigationRenderer {
         const menu = new Menu();
 
         // Add a header or separator if more settings groups are added in the future
-        menu.addItem((item) => item.setTitle("Filter Scope").setDisabled(true));
+        menu.addItem((item) => item.setTitle("Filter scope").setDisabled(true));
 
         menu.addItem((item) => {
-            item.setTitle("Tags & Filenames")
+            item.setTitle("Tags & filenames")
                 .setIcon(this.filterMode === TagFilterMode.TagsAndFiles ? "checkmark" : "")
                 .onClick(() => {
                     this.setFilterMode(TagFilterMode.TagsAndFiles);
@@ -715,7 +729,7 @@ export class TagNavigationRenderer {
         });
 
         menu.addItem((item) => {
-            item.setTitle("Tags Only")
+            item.setTitle("Tags only")
                 .setIcon(this.filterMode === TagFilterMode.TagsOnly ? "checkmark" : "")
                 .onClick(() => {
                     this.setFilterMode(TagFilterMode.TagsOnly);
@@ -724,7 +738,7 @@ export class TagNavigationRenderer {
         });
 
         menu.addItem((item) => {
-            item.setTitle("Filenames Only")
+            item.setTitle("Filenames only")
                 .setIcon(this.filterMode === TagFilterMode.FilesOnly ? "checkmark" : "")
                 .onClick(() => {
                     this.setFilterMode(TagFilterMode.FilesOnly);

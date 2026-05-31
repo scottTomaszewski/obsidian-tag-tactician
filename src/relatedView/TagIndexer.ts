@@ -1,4 +1,4 @@
-import {App, CachedMetadata, TFile} from "obsidian";
+import {CachedMetadata, TFile} from "obsidian";
 import TagTacticianPlugin from "../../main";
 
 /**
@@ -24,8 +24,6 @@ export class TagIndexer {
         for (const file of allFiles) {
             await this.indexSingleFile(file);
         }
-
-        console.log(`[TagIndexer] Indexed ${allFiles.length} files.`);
     }
 
     private async indexSingleFile(file: TFile) {
@@ -45,7 +43,7 @@ export class TagIndexer {
             }
         }
         if (cache.frontmatter && cache.frontmatter.tags) {
-            const fmTags = cache.frontmatter.tags;
+            const fmTags: unknown = cache.frontmatter.tags;
             if (Array.isArray(fmTags)) {
                 fmTags.forEach((tag) => typeof tag === "string" && tags.add(tag));
             } else if (typeof fmTags === "string") {
@@ -116,7 +114,7 @@ export class TagIndexer {
 
             // Path similarity
             let pathSimScore = 0
-            if (candidateFile.parent.path !== "/" && file.parent.path !== "/") {
+            if (candidateFile.parent && file.parent && candidateFile.parent.path !== "/" && file.parent.path !== "/") {
                 pathSimScore = levenshteinSimilarity(file.path, candidatePath);
             }
 
@@ -155,8 +153,9 @@ export class TagIndexer {
 /**
  * Utility function to collect tags from metadata cache
  */
-export function gatherTagsFromCache(cache: CachedMetadata): Set<string> {
+export function gatherTagsFromCache(cache: CachedMetadata | null): Set<string> {
     const tags: Set<string> = new Set();
+    if (!cache) return tags;
     if (cache.tags) {
         for (const t of cache.tags) {
             let rawTag = t.tag;
@@ -165,7 +164,7 @@ export function gatherTagsFromCache(cache: CachedMetadata): Set<string> {
         }
     }
     if (cache.frontmatter && cache.frontmatter.tags) {
-        const fmTags = cache.frontmatter.tags;
+        const fmTags: unknown = cache.frontmatter.tags;
         if (Array.isArray(fmTags)) {
             fmTags.forEach((tag) => typeof tag === "string" && tags.add(tag));
         } else if (typeof fmTags === "string") {
@@ -236,15 +235,15 @@ function levenshteinDistance(str1: string, str2: string): number {
  * Calculate a similarity score between two strings based on Levenshtein distance
  */
 export function levenshteinSimilarity(s1: string, s2: string): number {
-    var longer = s1;
-    var shorter = s2;
+    let longer = s1;
+    let shorter = s2;
     if (s1.length < s2.length) {
         longer = s2;
         shorter = s1;
     }
-    var longerLength = longer.length;
-    if (longerLength == 0) {
+    const longerLength = longer.length;
+    if (longerLength === 0) {
         return 1.0;
     }
-    return (longerLength - levenshteinDistance(longer, shorter)) / parseFloat(longerLength);
+    return (longerLength - levenshteinDistance(longer, shorter)) / longerLength;
 }

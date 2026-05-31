@@ -29,6 +29,11 @@
 
 .filter-input-container .search-input-clear-button {
     margin: 0;
+    display: none;
+}
+
+.filter-input-container .search-input-clear-button.is-visible {
+    display: flex;
 }
 
 .filter-input-container .search-input-clear-button:hover {
@@ -391,4 +396,42 @@
 .suggestion-item:hover,
 .suggestion-item.is-selected {
     background-color: var(--background-secondary);
+}
+
+/* =============================================
+ * Icon selection modal
+ * ============================================= */
+.tt-icon-modal .icon-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
+    gap: var(--size-4-2);
+    margin-top: var(--size-4-4);
+}
+
+.tt-icon-modal .icon-button {
+    background: none;
+    border: none;
+    padding: var(--size-4-2);
+    cursor: pointer;
+}
+
+.tt-icon-modal .icon-button:hover {
+    background-color: var(--background-modifier-hover);
+}
+
+.tt-icon-modal .icon {
+    width: var(--icon-size);
+    height: var(--icon-size);
+    margin: 0 auto;
+}
+
+/* =============================================
+ * Misc view helpers
+ * ============================================= */
+.related-notes-title-row .tt-options-btn {
+    margin-left: var(--size-4-4);
+}
+
+.tag-navigation-container a.tt-file-noicon {
+    margin-left: -1.25rem;
 }

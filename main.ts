@@ -6,7 +6,8 @@ import {
     TFolder,
     MarkdownView,
     TFile,
-    Vault, CachedMetadata
+    Vault,
+    EventRef,
 } from "obsidian";
 
 import { EditTagsModal } from "./src/batch/EditTagsModal";
@@ -16,6 +17,27 @@ import { TagTacticianSettings, DEFAULT_SETTINGS } from "./src/settings/PluginSet
 import { TagIndexer } from "./src/relatedView/TagIndexer";
 import { RelatedNotesView, RELATED_NOTES_VIEW_TYPE } from "./src/relatedView/RelatedNotesView";
 import { NavByTagView, TAG_NAVIGATION_VIEW_TYPE } from "./src/navByTag/NavByTagView";
+
+/** Shape of a search result child exposed by the (untyped) search view. */
+interface SearchResultItem {
+    file: TFile;
+}
+
+/** Minimal shape of the search leaf passed to the "search:results-menu" event. */
+interface SearchResultsLeaf {
+    dom: { vChildren: { children: SearchResultItem[] } };
+}
+
+// The "search:results-menu" event is not part of Obsidian's public typings.
+// Augment the Workspace interface so it can be used without resorting to `any`.
+declare module "obsidian" {
+    interface Workspace {
+        on(
+            name: "search:results-menu",
+            callback: (menu: Menu, leaf: SearchResultsLeaf) => unknown,
+        ): EventRef;
+    }
+}
 
 /**
  * Main plugin class for Tag Tactician
@@ -38,11 +60,10 @@ export default class TagTacticianPlugin extends Plugin {
     }
 
     /**
-     * Clean up when plugin is disabled
+     * Clean up when plugin is disabled. Obsidian detaches the plugin's leaves
+     * automatically, so no manual cleanup is required here.
      */
     onunload() {
-        this.app.workspace.detachLeavesOfType(RELATED_NOTES_VIEW_TYPE);
-        this.app.workspace.detachLeavesOfType(TAG_NAVIGATION_VIEW_TYPE);
     }
 
     // --------------------------------
@@ -53,7 +74,8 @@ export default class TagTacticianPlugin extends Plugin {
      * Load plugin settings
      */
     async loadSettings() {
-        this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+        const data = (await this.loadData()) as Partial<TagTacticianSettings> | null;
+        this.settings = Object.assign({}, DEFAULT_SETTINGS, data);
     }
 
     /**
@@ -86,16 +108,15 @@ export default class TagTacticianPlugin extends Plugin {
             })
         );
 
-        // Search Results menu commands
+        // Search results menu command
         this.registerEvent(
-            this.app.workspace.on("search:results-menu", (menu: Menu, leaf: any) => {
-                let files = [] as TFile[]
-                leaf.dom.vChildren.children.forEach((e: any) => files.push(e.file))  // TODO: there must be a better way to do this!
-                if(files.length < 1){return}
+            this.app.workspace.on("search:results-menu", (menu: Menu, leaf: SearchResultsLeaf) => {
+                const files = leaf.dom.vChildren.children.map((child) => child.file);
+                if (files.length < 1) return;
 
-                menu.addItem((item) =>{
+                menu.addItem((item) => {
                     item
-                        .setTitle("Tag-Tactician: Edit tags on " + files.length + " notes...")
+                        .setTitle(`Edit tags on ${files.length} notes...`)
                         .setIcon("tag")
                         .onClick(() => {
                             new EditTagsModal(this.app, files, async (updates) => {
@@ -120,7 +141,7 @@ export default class TagTacticianPlugin extends Plugin {
             item
                 .setTitle("Edit tags (frontmatter)")
                 .setIcon("hashtag")
-                .onClick(async () => {
+                .onClick(() => {
                     const allItems = expandFolders(selection);
                     new EditTagsModal(this.app, allItems, async (updates) => {
                         const modifiedCount = await applyTagUpdates(
@@ -148,16 +169,10 @@ export default class TagTacticianPlugin extends Plugin {
         // Register the "Related Notes" view
         this.registerView(RELATED_NOTES_VIEW_TYPE, (leaf) => new RelatedNotesView(leaf, this));
 
-        this.registerEvent(
-            this.app.workspace.on('layout-ready', async () => {
-                await this.activateRelatedNotesView();
-            })
-        );
-
         // Add command to show the "Related Notes" sidebar
         this.addCommand({
             id: "open-related-notes-view",
-            name: "Open Related Notes Sidebar",
+            name: "Open related notes sidebar",
             callback: () => this.activateRelatedNotesView(),
         });
 
@@ -188,7 +203,6 @@ export default class TagTacticianPlugin extends Plugin {
         // Build the tag index after layout is ready (so getMarkdownFiles() won't be empty)
         this.app.workspace.onLayoutReady(async () => {
             await this.tagIndexer.buildIndex();
-            console.log(`[Tag Tactician] Related notes index built after layout ready.`);
         });
     }
 
@@ -216,11 +230,11 @@ export default class TagTacticianPlugin extends Plugin {
             const rightLeaf = this.app.workspace.getRightLeaf(false);
             if (rightLeaf) {
                 await rightLeaf.setViewState({type: RELATED_NOTES_VIEW_TYPE});
-                this.app.workspace.revealLeaf(rightLeaf);
+                void this.app.workspace.revealLeaf(rightLeaf);
             }
         } else {
             // Use existing leaf
-            this.app.workspace.revealLeaf(leaf);
+            void this.app.workspace.revealLeaf(leaf);
         }
         this.updateRelatedNotesView();
     }
@@ -247,24 +261,18 @@ export default class TagTacticianPlugin extends Plugin {
             (leaf) => new NavByTagView(leaf, this)
         );
 
-        this.registerEvent(
-            this.app.workspace.on('layout-ready', async () => {
-                await this.activateTagNavigationView();
-            })
-        );
-
         // Add a command to open the tag-based file navigation view
         this.addCommand({
             id: "open-tag-navigation-view",
-            name: "Open Tag-Based File Navigation",
+            name: "Open tag-based file navigation",
             callback: () => this.activateTagNavigationView(),
         });
 
-        // Listen for active note changes (only if it's a MarkdownView)
+        // Refresh the navigation view when metadata changes (debounced)
         let timer: number | null = null;
         this.registerEvent(
-            this.app.metadataCache.on("changed", (file: TFile, meta: CachedMetadata) => {
-                window.clearTimeout(timer!);
+            this.app.metadataCache.on("changed", () => {
+                window.clearTimeout(timer ?? undefined);
                 timer = window.setTimeout(() => this.refreshTagNavigationView(), 150);
             })
         );
