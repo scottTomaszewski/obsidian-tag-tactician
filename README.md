@@ -1,111 +1,137 @@
-# Tag Tactician Obsidian Plugin
+# Tag Tactician
 
-Tag Tactician is an Obsidian plugin that makes it easy to bulk edit the frontmatter tags of multiple notes at once. 
-You can add or remove tags across many files, preview proposed changes, and selectively apply updates to individual 
-notes—all without leaving Obsidian.
+Better tag management for [Obsidian](https://obsidian.md): bulk-edit frontmatter tags, discover related notes through tag similarity, and browse your vault by a hierarchical tag structure.
 
-Additionally, Tag Tactician comes with a "Related Notes" View to display notes that have similarities to the current
-active note.  Notes are determined to be related based on similarity of tags, filename, links, and more.
+## Features
 
-Tag Tactician also has a "Tag Navigation" view to display your notes in a hierarchy format organized by their tags.
+- **Bulk tag operations** — add or remove frontmatter tags across many notes (or whole folders) at once, with a live preview before you apply.
+- **Related notes** — a sidebar that surfaces notes similar to the one you're viewing, scored by tag overlap, title, path, and links.
+- **Tag navigation** — a sidebar that organizes your notes into a collapsible hierarchy based on nested tags, so one note can live in many "folders" at once.
+
+## Contents
+
+- [Requirements](#requirements)
+- [Installation](#installation)
+- [Bulk tag operations](#bulk-tag-operations)
+- [Related notes view](#related-notes-view)
+- [Tag navigation view](#tag-navigation-view)
+- [Commands](#commands)
+- [Support & contributing](#support--contributing)
 
 ## Requirements
 
-Tag Tactician requires Obsidian 1.7.2 or newer.
+Tag Tactician requires Obsidian **1.7.2** or newer.
 
-## Installation (from obsidian)
+## Installation
 
-1. Open Settings > Community Plugins.
-2. Make sure “Safe Mode” is off.
-3. Click “Browse” and search for `Tag Tactician`.
-4. Click “Install”, then “Enable”.
+1. Open **Settings → Community plugins**.
+2. Turn off **Restricted mode** (formerly "Safe mode").
+3. Click **Browse** and search for `Tag Tactician`.
+4. Click **Install**, then **Enable**.
 
-## Bulk Tag Operations
+## Bulk tag operations
 
-![bulk ops](bulk_ops.png)
+![Bulk tag operations](bulk_ops.png)
 
-1. **BACK UP YOUR VAULT**
-   2. This plugin is still in early development and there is no undo feature!
-1. Access the bulk-edit modal in one of the following ways:
-   1. Right-click one or more notes or folders and select “Edit tags (frontmatter)”
-   2. In the search results view, click the "search results" component select "Tag-Tactician: Edit tags on X notes"
-3. A modal will appear, showing:
-   1. Fields for “Tags to add” and “Tags to remove.”
-      2. For multiple tags, separate them with commas.
-   2. A table listing each file, its current tags, and a live preview of its proposed tags.
-   3. Checkboxes to select/deselect which files should get updated.
-   6. After verifying the changes, click "Apply changes" to update all checked files at once.
+Add or remove frontmatter tags across many notes in one pass.
+
+> ⚠️ **Back up your vault first.** This plugin is still in early development and there is **no undo** for bulk edits.
+
+### How to use
+
+1. Open the bulk-edit modal in one of these ways:
+   - Right-click one or more notes **or folders** and choose **Edit tags (frontmatter)**. (Folders are expanded to all the notes inside them.)
+   - In the **Search** results pane, click the results menu (the icon above the results) and choose **Edit tags on N notes…**.
+2. In the modal you'll see:
+   - **Add tags** and **Remove tags** fields — enter one or more tags, separated by commas.
+   - A table of every selected file showing its current tags and a live preview of the proposed result.
+   - A checkbox per row to include or exclude that file (use **Select all** / **Deselect all** to toggle them together).
+3. Review the preview, then click **Apply changes** to update every checked file at once.
 
 ### Settings
 
-- Show Warning for Non-Markdown Files: When enabled, files that aren’t .md are listed with a warning and are excluded from modification.
-- Tag List Style: Choose between:
+- **Show warning for non-Markdown files** — when enabled, non-`.md` files in your selection are listed with a warning and excluded from changes.
+- **Tag list style** — how tag arrays are written to frontmatter:
 
-Hyphens (block style arrays)
-```yaml
-tags:
-  - foo
-  - bar 
-```
+  Hyphens (block style):
+  ```yaml
+  tags:
+    - foo
+    - bar
+  ```
 
-Brackets (flow style arrays, e.g. tags: [foo, bar]).
-```yaml
-tags: [foo, bar]
-```
+  Brackets (flow style):
+  ```yaml
+  tags: [foo, bar]
+  ```
 
-### Caveats & Limitations
+### Caveats & limitations
 
-- Supports Frontmatter Tags Only: Inline #tags (in body text) are not changed.
-- Invalid YAML: If a note has broken YAML or duplicate keys for tags, the plugin will skip that note and warn you. You must fix it manually.
-- Large Vaults: Updating thousands of notes simultaneously could be slow; consider selecting a smaller scope (folder or partial selection) at a time.
-- No Undo: Obsidian doesn’t have a built-in undo for plugin-driven bulk edits. **Back up your vault**, or test changes on sample notes if you’re unsure.
+- **Frontmatter tags only** — inline `#tags` in the note body are not modified.
+- **Invalid YAML** — notes with broken YAML or duplicate `tags` keys are skipped with a warning; fix those manually.
+- **Large vaults** — updating thousands of notes at once can be slow; consider working in smaller batches (a folder or partial selection at a time).
+- **No undo** — Obsidian has no built-in undo for plugin-driven edits, so back up your vault or test on a few sample notes first.
 
-## Related Notes View
+## Related notes view
 
-![related notes](related_notes.png)
+![Related notes](related_notes.png)
 
-The Related Notes view helps to find notes in your vault that are potentially related to the current active note.  
-How much one note is "related" to is determined by customizable weighting of tag similarity, title similarity, path 
-similarity, path similarity, and linking to each other. 
+Finds notes that are similar to the note you're currently viewing. Similarity is a weighted blend of **tag similarity**, **title similarity**, **path similarity**, and whether the notes **link to each other**.
 
-To open the Related Notes view, open the command palette and search for "Tag Tactician: Open related notes sidebar".
+Open it from the command palette: **Tag Tactician: Open related notes sidebar**.
 
-When a note is active, the Related Notes View will show a list of related notes.  Each item contains:
+When a note is active, the view lists related notes. Each entry shows:
 
 1. A link to the note.
-2. (Optional) A "score" for how similar the note is to the active note (higher is more similar).
-3. (Optional) A list of tags on the related note.
+2. *(Optional)* A similarity **score** — higher means more similar.
+3. *(Optional)* The **tags** on that note.
 
-Above the related notes list is: 
+The toolbar above the list provides:
 
-1. A menu with options such as show/hide tags, show/hide score, and also a button to refresh the list.
-2. A filtering text box to filter the list of related notes by title or tag.
-
-### Settings
-
-- **Show tags by default:** When enabled, the tags of related notes will be shown by default.
-- **Show score by default:** When enabled, the score of related notes will be shown by default.
-- **Hide results with score below:** Related notes with a score below the specified value will be hidden in the view. 
-  - Default value is `1`.
-- **Score weighting adjustments**: Adjust the weight of each factor in the similarity score calculation.
-  - Higher values increase the importance of that factor.
-  - Set the weight to `0` to ignore that factor.
-  - Default value for each is `1`.
-
-## Tag Navigation
-
-![tag nav](tag_nav.png)
-
-The Tag Navigation view is a sidebar panel to navigate your notes organized by a hierarchical tag structure.  In this 
-way, if a note has a nested tags, that tag effectively acts as a folder in the tag navigation view.  This approach is 
-superior to folders because it allows for a note to be in multiple "folders" at once.
-
-Above the tag list is:
-
-1. A button to change the sort order of the tags (by name or note count).
-2. A button to expand/collapse all tags.
-3. A filtering text box to filter the list by title or tag.
+- An options menu to show/hide tags, show/hide the score, and refresh the list.
+- A filter box to narrow the list by title or tag (matches are highlighted).
 
 ### Settings
 
-- **Default navigation sorting:** Choose between sorting tags by name or note count.
+- **Show tags by default** — show related notes' tags when the view opens.
+- **Show score by default** — show the similarity score when the view opens.
+- **Hide results with score below** — hide related notes scoring under this threshold (default `1`).
+- **Score weighting** — adjust how much each factor (tag, title, path, links) contributes to the score.
+  - Higher values increase that factor's importance.
+  - Set a weight to `0` to ignore that factor entirely.
+  - Each defaults to `1`.
+
+## Tag navigation view
+
+![Tag navigation](tag_nav.png)
+
+A sidebar that organizes your notes into a collapsible hierarchy built from nested tags. A nested tag such as `programming/python` acts like a folder — but unlike folders, a note can appear under every tag it carries.
+
+Open it from the command palette: **Tag Tactician: Open tag-based file navigation**.
+
+The toolbar above the list provides:
+
+- A button to change the sort order (by name, note count, or created/modified date).
+- A button to expand or collapse all tag groups.
+- A filter box to narrow the list by tag or filename (matches are highlighted).
+
+### Settings
+
+- **Default navigation sorting** — the sort order applied when the view opens.
+- **Tag group icon (closed / open)** — the icons used for collapsed and expanded tag groups.
+- **File icon** — the icon shown next to individual notes.
+
+## Commands
+
+| Command | What it does |
+| --- | --- |
+| **Open related notes sidebar** | Opens the Related notes view in the right sidebar. |
+| **Open tag-based file navigation** | Opens the Tag navigation view in the left sidebar. |
+
+Bulk tag editing is triggered from the file/folder right-click menu and the search results menu rather than a command (see [Bulk tag operations](#bulk-tag-operations)).
+
+## Support & contributing
+
+Found a bug or have a feature idea? Please open an issue on the [GitHub repository](https://github.com/scottTomaszewski/obsidian-tag-tactician). Pull requests are welcome.
+
+See [CHANGELOG.md](CHANGELOG.md) for release notes.
