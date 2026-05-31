@@ -9,6 +9,10 @@ active note.  Notes are determined to be related based on similarity of tags, fi
 
 Tag Tactician also has a "Tag Navigation" view to display your notes in a hierarchy format organized by their tags.
 
+## Requirements
+
+Tag Tactician requires Obsidian 1.7.2 or newer.
+
 ## Installation (from obsidian)
 
 1. Open Settings > Community Plugins.
