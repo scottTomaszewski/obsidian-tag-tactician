@@ -89,7 +89,7 @@
 
 /* Column styles */
 .tt-bulk-tag-modal .cb-col {
-    display: table-cell
+    display: table-cell;
     width: 24px;
     text-align: center;
     padding: 8px;
