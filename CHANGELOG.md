@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.10.1
 
 - Fixed a missing semicolon in `styles.css` that caused a CSS lint error
 
