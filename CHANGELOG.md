@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Fixed a missing semicolon in `styles.css` that caused a CSS lint error
+
 ## 1.10.0
 
 - Corrected the minimum required Obsidian version to 1.7.2 to match the APIs the plugin actually uses
