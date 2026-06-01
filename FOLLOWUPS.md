@@ -8,8 +8,11 @@ Small deferred findings. Larger planned efforts → `ROADMAP.md` (not yet create
   whether to maintain it (and add it to the release script) or accept it as-is.
 - **Icon picker has no search.** `src/settings/IconSelectionModal.ts` — `TODO - add
   search`.
-- **Related-notes list is hard-capped/unfiltered.** `src/relatedView/RelatedNotesView.ts`
-  — `TODO - make this slice configurable or infinite scrolling`.
+- **Related-notes list is uncapped.** `src/relatedView/RelatedNotesView.ts` renders
+  *every* result above `minimumRelatedNotesScore` — there is no count limit (despite the
+  `TODO - make this slice configurable or infinite scrolling`, no `.slice()` exists yet).
+  On large vaults this can be a very long list; a configurable cap or infinite scroll is
+  the intended fix.
 - **Related-notes scoring is a full vault scan per note switch.** No persistent index;
   candidate for caching/precomputation if large-vault performance matters. See
   [docs/related-notes-scoring.md](docs/related-notes-scoring.md).
