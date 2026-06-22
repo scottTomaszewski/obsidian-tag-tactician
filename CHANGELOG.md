@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.10.2
 
 - Made the related notes pane scrollable so all matching notes are reachable regardless of window height
 
