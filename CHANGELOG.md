@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Made the related notes pane scrollable so all matching notes are reachable regardless of window height
+
 ## 1.10.1
 
 - Fixed a missing semicolon in `styles.css` that caused a CSS lint error

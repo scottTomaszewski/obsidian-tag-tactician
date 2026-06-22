@@ -184,8 +184,7 @@ export class RelatedNotesView extends ItemView {
             return;
         }
 
-        // Show top results after filtering
-        // TODO - make this slice configurable or infinite scrolling
+        // Show all results above the score threshold; the list container scrolls.
         const topResults = filteredResults
             .filter(r => r.score >= this.plugin.settings.minimumRelatedNotesScore);
         for (const { notePath, score } of topResults) {

@@ -134,6 +134,20 @@
  * ============================================= */
 .related-notes-container {
     padding: 10px;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.related-notes-container .related-notes-header {
+    flex: 0 0 auto;
+}
+
+.related-notes-container .related-notes-list-container {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
 }
 
 .related-notes-container .related-notes-title-row {
